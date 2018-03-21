@@ -42,7 +42,7 @@ public class GUI {
 				if (cells[iy][ix].content != Seed.EMPTY) {
 					if (cells[iy][ix].content == Seed.CROSS) {
 						g.drawChar('X',pos_fields[0][ix],pos_fields[1][iy],GraphicsLCD.HCENTER|GraphicsLCD.BASELINE);
-					} else if (cells[iy][ix].content == Seed.CROSS) {
+					} else if (cells[iy][ix].content == Seed.NOUGHT) {
 						g.drawChar('O',pos_fields[0][ix],pos_fields[1][iy],GraphicsLCD.HCENTER|GraphicsLCD.BASELINE);
 					}
 				}
