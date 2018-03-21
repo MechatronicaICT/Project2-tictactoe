@@ -1,4 +1,3 @@
-package test1;
 
 import lejos.hardware.BrickFinder;
 import lejos.hardware.lcd.*;
@@ -10,12 +9,9 @@ import lejos.hardware.motor.Motor;
 import lejos.hardware.port.MotorPort;
 import lejos.robotics.RegulatedMotor;
 
-public class kine {
-	public static void main(String[] args) {
-		int [] position= {0,0};
-		int [] destination= {1,5};
-		position = moveWidth(position,destination);
-		position = moveLength(position,destination);
+public class kine implements Runnable {
+	public kine() {
+		
 	}
 		public static int [] moveWidth(int [] start , int [] end) {
 			//geometry field
@@ -41,6 +37,14 @@ public class kine {
 			motorLength.rotate((int)angleRotL);
 			start[1]= end[1];
 			return start;
+		}
+		
+		public void run() {
+			int [] position= {0,0};
+			int [] destination= {1,5};
+			position = moveWidth(position,destination);
+			position = moveLength(position,destination);
+			Delay.msDelay(2000);
 		}
 		
 		

@@ -1,4 +1,4 @@
-package test1;
+
 
 import lejos.hardware.BrickFinder;
 //import lejos.hardware.motor.Motor;
@@ -23,6 +23,7 @@ public class program {
  int colorId=(int)sample[0];
  //https://www.programcreek.com/java-api-examples/?api=lejos.hardware.sensor.EV3ColorSensor
  lcd.drawInt(colorId,0,0);
+ 
  }
  }
  
