@@ -81,8 +81,34 @@ public class GUI {
             	if (move_human[0] > 2) move_human[0] = move_human[0]-3;
             }
 		}
+		g.setStrokeStyle(0);
 		return move_human;
 		
+	}
+	
+	public void clear() {
+		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+		g.clear();
+	}
+	
+	public void winner(Seed winner) {
+		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+		g.clear();
+		g.setFont(Font.getDefaultFont());
+		String s ="";
+		if (winner == Seed.CROSS) s = "Player X Won!";
+		if (winner == Seed.NOUGHT) s = "Player O Won";
+		if (winner == Seed.EMPTY) s = "It's a Draw!";
+		g.drawString(s, g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		Delay.msDelay(3000);
+	}
+	
+	public void invalidMove() {
+		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+		g.clear();
+		g.setFont(Font.getDefaultFont());
+		g.drawString("Invalid Move, please try again...",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		Delay.msDelay(1000);
 	}
 	
 	/** Paint itself */

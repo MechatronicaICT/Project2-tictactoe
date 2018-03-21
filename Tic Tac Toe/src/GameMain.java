@@ -52,11 +52,11 @@ public class GameMain {
 			updateGame(currentPlayer); // update currentState
 			// Print message if game-over
 			if (currentState == GameState.CROSS_WON) {
-				System.out.println("'X' won! Bye!");
+				GUIlejos.winner(currentPlayer);
 			} else if (currentState == GameState.NOUGHT_WON) {
-				System.out.println("'O' won! Bye!");
+				GUIlejos.winner(currentPlayer);
 			} else if (currentState == GameState.DRAW) {
-				System.out.println("It's Draw! Bye!");
+				GUIlejos.winner(Seed.EMPTY);
 			}
 			// Switch player
 			currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
@@ -113,7 +113,7 @@ public class GameMain {
 				currentCol = col;
 				validInput = true; // input okay, exit loop
 			} else {
-				System.out.println("This move at (" + (row + 1) + "," + (col + 1) + ") is not valid. Try again...");
+				GUIlejos.invalidMove();
 			}
 		} while (!validInput); // repeat until input is valid
 	}
