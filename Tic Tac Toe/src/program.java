@@ -1,4 +1,4 @@
-package test1;
+
 
 import lejos.hardware.BrickFinder;
 //import lejos.hardware.motor.Motor;
