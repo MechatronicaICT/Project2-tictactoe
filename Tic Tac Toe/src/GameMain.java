@@ -67,9 +67,8 @@ public class GameMain {
 	/** Initialize the game-board contents and the current states */
 	public void initGame() {
 		board.init(); // clear the board contents
-		currentPlayer = Seed.CROSS; // CROSS plays first
+		currentPlayer = GUIlejos.firstPlayer();
 		currentState = GameState.PLAYING; // ready to play
-
 	}
 
 	/**

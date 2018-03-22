@@ -111,6 +111,29 @@ public class GUI {
 		Delay.msDelay(1000);
 	}
 	
+	Seed firstPlayer() {
+		Seed firstPlayer = Seed.CROSS;
+		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+		while (true) {
+			g.drawString("Who begins?", 100, 200, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+			g.drawString("Human (X)", 100, 300, 0);
+			g.drawString("Computer (O)", 100, 300, 0);
+			if (firstPlayer == Seed.CROSS) {
+				g.drawLine(100, 300, 100, 400);
+			} else {
+				g.drawLine(0,0,0,0);
+			}
+			int but = Button.waitForAnyPress();
+            if ((but & Button.ID_ENTER) != 0) {
+            	break;
+            }
+            if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)) {
+    			firstPlayer = (firstPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+            }
+		}
+		return firstPlayer;
+	}
+	
 	/** Paint itself */
 	public void paint() {
       for (int row = 0; row < ROWS; ++row) {
