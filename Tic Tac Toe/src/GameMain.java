@@ -1,4 +1,6 @@
 
+import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /**
@@ -13,13 +15,17 @@ public class GameMain {
 	private AIPlayerTableLookup AIplayer2;
 	private GUI GUIlejos;
 	private MyRunnable myRunnable;
+	
+	public static ArrayDeque<Opdracht> arrOpdrachten = new ArrayDeque<>();
 
 	// Named-constants for the dimensions
 	public static final int ROWS = 3;
 	public static final int COLS = 3;
+	public int score = 0;
 
 	int currentRow, currentCol; // the current seed's row and column
-
+	int state = 1;
+	
 	private static Scanner in = new Scanner(System.in); // input Scanner
 
 	/**
@@ -27,43 +33,129 @@ public class GameMain {
 	 * 
 	 * @throws InterruptedException
 	 */
-	public GameMain() {
+	public GameMain() throws InterruptedException {
 
-		myRunnable = new MyRunnable();
+		myRunnable = new MyRunnable(arrOpdrachten);
 		Thread t = new Thread(myRunnable);
-		//t.start();
+		t.start();
 		
 		board = new Board(3, 3); // allocate game-board
 
+		//testtje
+		OpdrachtZet oZet = new OpdrachtZet(String.valueOf(1),"f");
+		arrOpdrachten.add(oZet);
+		///
+		
 		AIplayer1 = new AIPlayerMinimax(board);
 		AIplayer1.setSeed(Seed.CROSS);
 		AIplayer2 = new AIPlayerTableLookup(board);
 		AIplayer2.setSeed(Seed.NOUGHT);
 		GUIlejos = new GUI(board);
+		
 
-		// Initialize the game-board and current status
-		initGame();
-		// Play the game once. Players CROSS and NOUGHT move alternately.
-		do {
-			// coint();
-			playerMove(currentPlayer); // update the content, currentRow and currentCol
-			// GUIlejos.paint(); // ask the board to paint itself
-			GUIlejos.drawBoard();
-			updateGame(currentPlayer); // update currentState
-			// Print message if game-over
-			if (currentState == GameState.CROSS_WON) {
-				GUIlejos.winner(currentPlayer);
-			} else if (currentState == GameState.NOUGHT_WON) {
-				GUIlejos.winner(currentPlayer);
-			} else if (currentState == GameState.DRAW) {
-				GUIlejos.winner(Seed.EMPTY);
-			}
-			// Switch player
-			currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-		} while (currentState == GameState.PLAYING); // repeat until game-over
 
+		System.out.println("sdfsdf");
+		
+		
+		while (true) {
+			loopCase();
+			
+			//main opdrachten trager laten draaien
+			Thread.sleep(100);
+		}  // repeat until game-over
+	
+		
 	}
 
+	public void loopCase() {
+		// init state
+		/*
+		 * 1 = start toetstand
+		 * 2 = bevindt zich in game modus
+		 * 3 = game ai zet
+		 * 4 = eind spel
+		 * 5 = scan modus
+		 * 6 = homing modus
+		 * 
+		 */
+		switch (state) {
+		
+		// start
+		case 1:
+			
+				//test array via runnable
+				OpdrachtZet oZet = new OpdrachtZet(String.valueOf(score),"f");
+				arrOpdrachten.add(oZet);
+				score = score+ 1;
+				/////////////
+    			
+				if(GUIlejos.getGame() != 0) {
+					GUIlejos.resetGame();
+					// Initialize the game-board and current status
+					initGame();
+					state = 2;
+				}
+				return;
+								
+		// Game		
+		case 2: 
+			
+				int[] arrCheck = {0,0};
+				//check of de gui al een zet heeft gekregen
+				if(!(Arrays. equals(arrCheck,GUIlejos.getZet()))) {  
+					
+				playerMove(currentPlayer); // update the content, currentRow and currentCol
+				// GUIlejos.paint(); // ask the board to paint itself
+				GUIlejos.drawBoard();
+				updateGame(currentPlayer); // update currentState
+				// Switch player
+				currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+				
+				//array met opdracht zet aanvullen
+				OpdrachtZet opdrachtje = new OpdrachtZet("rerer","f");
+				arrOpdrachten.add(opdrachtje);
+				
+				// Print message if game-over
+				if (currentState == GameState.CROSS_WON) {
+					GUIlejos.winner(currentPlayer);
+					// go to end game
+					state = 4;							
+				} else if (currentState == GameState.NOUGHT_WON) {
+					GUIlejos.winner(currentPlayer);
+					// go to end game
+					state = 4;
+				} else if (currentState == GameState.DRAW) {
+					GUIlejos.winner(Seed.EMPTY);
+					// go to end game
+					state = 4;
+				}
+				//AI zet
+				state =  3;
+				}
+				return;
+				
+		
+		// game AI zet		
+		case 3: 	
+			
+				return;
+		
+		// end game		
+		case 4: 
+				
+				return;
+		// scan		
+		case 5: 
+				return;
+		//homing	
+		case 6: 
+				return;
+		//error			
+		default: System.out.println("fault");
+				return;	
+		}
+	}
+	
 	/** Initialize the game-board contents and the current states */
 	public void initGame() {
 		board.init(); // clear the board contents
@@ -90,16 +182,17 @@ public class GameMain {
 
 				// row = in.nextInt() - 1;
 				// col = in.nextInt() - 1;
-
+				//  waight for zet speler
 				int[] test = GUIlejos.humanMove();
 				
+				// zet verwerken
 				row = test[0];
 				col = test[1];
 			} else {
 				// System.out.println("Player 'O', enter your move (row[1-3] column[1-3]): ");
-
+				// AI zet opvragen
 				int[] test = AIplayer2.move();
-
+				// zet verwerken
 				row = test[0];
 				col = test[1];
 
@@ -129,7 +222,12 @@ public class GameMain {
 
 	/** The entry main() method */
 	public static void main(String[] args) {
-		new GameMain(); // Let the constructor do the job
+		try {
+			new GameMain();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} // Let the constructor do the job
 	}
 
 	public static int ROWS() {

@@ -15,6 +15,8 @@ public class GUI {
    
    public int ROWS;
    public int COLS;
+   public int Game;
+   public int[] Zet = { 0 , 0};
 	
 	public GUI(Board board) {
 		cells = board.cells;
@@ -147,6 +149,30 @@ public class GUI {
          }
       }
    }
+	
+	
+// communicatie tussen Gui en Game main	
+	
+	// game mode resetten
+	public void resetGame(){                                             
+	         Game = 0; // reset        
+	}                                       
+	// retreive what game mode 
+	public int getGame(){                                                
+	         return Game; // return game mode
+	}
+	
+	// speler zet opvragen
+	public void resetZet(){                                             
+        Zet[1] = 0; // reset                                             
+        Zet[2] = 0; // reset
+        
+	}                                       
+	// retreive what game mode 
+	public int[] getZet(){                                                 
+        return Zet; // return game mode
+	}                                               
+  
 
 
 
