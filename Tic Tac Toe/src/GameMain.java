@@ -11,10 +11,10 @@ public class GameMain {
 	private Board board; // the game board
 	private GameState currentState; // the current state of the game (of enum GameState)
 	private Seed currentPlayer; // the current player (of enum Seed)
-	private AIPlayerMinimax AIplayer1;
-	private AIPlayerTableLookup AIplayer2;
-	private GUI GUIlejos;
-	private MyRunnable myRunnable;
+	private AIPlayerMinimax aiPlayer1;
+	private AIPlayerTableLookup aiPlayer2;
+	private GUI guiLejos;
+	private Kine kine;
 	
 	public static ArrayDeque<Opdracht> arrOpdrachten = new ArrayDeque<>();
 
@@ -28,41 +28,72 @@ public class GameMain {
 	
 	private static Scanner in = new Scanner(System.in); // input Scanner
 
+	
+	/** The entry main() method */
+	public static void main(String[] args) {
+	
+		new GameMain();
+			
+	}
+	
+	
 	/**
 	 * Constructor to setup the game
 	 * 
 	 * @throws InterruptedException
 	 */
-	public GameMain() throws InterruptedException {
+	
+	public GameMain(){
 
-		myRunnable = new MyRunnable(arrOpdrachten);
-		Thread t = new Thread(myRunnable);
-		t.start();
+		//opstarten kine thread
+		kine = new Kine(arrOpdrachten);
+		Thread tKine = new Thread(kine);
+		tKine.start();
 		
 		board = new Board(3, 3); // allocate game-board
+	
+		
+		//opstarten Gui thread
+		guiLejos = new GUI(board);
+		//gebruiken wanneer classe een runnable is
+		//Thread tguiLejos = new Thread(guiLejos);
+		//tguiLejos.start();
+			
+		
+		
 
 		//testtje
-		OpdrachtZet oZet = new OpdrachtZet(String.valueOf(1),"f");
+		OpdrachtZet oZet = new OpdrachtZet(score, null, null);
 		arrOpdrachten.add(oZet);
 		///
 		
-		AIplayer1 = new AIPlayerMinimax(board);
-		AIplayer1.setSeed(Seed.CROSS);
-		AIplayer2 = new AIPlayerTableLookup(board);
-		AIplayer2.setSeed(Seed.NOUGHT);
-		GUIlejos = new GUI(board);
+		aiPlayer1 = new AIPlayerMinimax(board);
+		aiPlayer1.setSeed(Seed.CROSS);
+		aiPlayer2 = new AIPlayerTableLookup(board);
+		aiPlayer2.setSeed(Seed.NOUGHT);
 		
-
-
+		
+		
+		
+		
 		System.out.println("sdfsdf");
-		
-		
-		while (true) {
-			loopCase();
+		try {
 			
-			//main opdrachten trager laten draaien
-			Thread.sleep(100);
-		}  // repeat until game-over
+			while (true) {
+				loopCase();
+				
+				
+				//main opdrachten trager laten draaien
+				Thread.sleep(2000);
+			}  // repeat until game-over
+			
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} // Let the constructor do the job1
+		
+		tKine.stop();
+		
 	
 		
 	}
@@ -84,13 +115,15 @@ public class GameMain {
 		case 1:
 			
 				//test array via runnable
-				OpdrachtZet oZet = new OpdrachtZet(String.valueOf(score),"f");
+				OpdrachtZet oZet = new OpdrachtZet(currentCol, null, null);
 				arrOpdrachten.add(oZet);
 				score = score+ 1;
 				/////////////
+				
+				
     			
-				if(GUIlejos.getGame() != 0) {
-					GUIlejos.resetGame();
+				if(guiLejos.getGame() != 0) {
+					guiLejos.resetGame();
 					// Initialize the game-board and current status
 					initGame();
 					state = 2;
@@ -102,30 +135,30 @@ public class GameMain {
 			
 				int[] arrCheck = {0,0};
 				//check of de gui al een zet heeft gekregen
-				if(!(Arrays. equals(arrCheck,GUIlejos.getZet()))) {  
+				if(!(Arrays. equals(arrCheck,guiLejos.getZet()))) {  
 					
 				playerMove(currentPlayer); // update the content, currentRow and currentCol
-				// GUIlejos.paint(); // ask the board to paint itself
-				GUIlejos.drawBoard();
+				// guiLejos.paint(); // ask the board to paint itself
+				guiLejos.drawBoard();
 				updateGame(currentPlayer); // update currentState
 				// Switch player
 				currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
 				
 				//array met opdracht zet aanvullen
-				OpdrachtZet opdrachtje = new OpdrachtZet("rerer","f");
+				OpdrachtZet opdrachtje = new OpdrachtZet(currentCol, null, null);
 				arrOpdrachten.add(opdrachtje);
 				
 				// Print message if game-over
 				if (currentState == GameState.CROSS_WON) {
-					GUIlejos.winner(currentPlayer);
+					guiLejos.winner(currentPlayer);
 					// go to end game
 					state = 4;							
 				} else if (currentState == GameState.NOUGHT_WON) {
-					GUIlejos.winner(currentPlayer);
+					guiLejos.winner(currentPlayer);
 					// go to end game
 					state = 4;
 				} else if (currentState == GameState.DRAW) {
-					GUIlejos.winner(Seed.EMPTY);
+					guiLejos.winner(Seed.EMPTY);
 					// go to end game
 					state = 4;
 				}
@@ -159,8 +192,9 @@ public class GameMain {
 	/** Initialize the game-board contents and the current states */
 	public void initGame() {
 		board.init(); // clear the board contents
-		currentPlayer = GUIlejos.firstPlayer();
+		currentPlayer = guiLejos.firstPlayer();
 		currentState = GameState.PLAYING; // ready to play
+		
 	}
 
 	/**
@@ -175,7 +209,7 @@ public class GameMain {
 			int col = 0;
 			if (theSeed == Seed.CROSS) {
 				// System.out.println("Player 'X', enter your move (row[1-3] column[1-3]): ");
-				// int[] test = AIplayer1.move();
+				// int[] test = aiPlayer1.move();
 
 				// row = test[0];
 				// col = test[1];
@@ -183,7 +217,7 @@ public class GameMain {
 				// row = in.nextInt() - 1;
 				// col = in.nextInt() - 1;
 				//  waight for zet speler
-				int[] test = GUIlejos.humanMove();
+				int[] test = guiLejos.humanMove();
 				
 				// zet verwerken
 				row = test[0];
@@ -191,7 +225,7 @@ public class GameMain {
 			} else {
 				// System.out.println("Player 'O', enter your move (row[1-3] column[1-3]): ");
 				// AI zet opvragen
-				int[] test = AIplayer2.move();
+				int[] test = aiPlayer2.move();
 				// zet verwerken
 				row = test[0];
 				col = test[1];
@@ -205,7 +239,7 @@ public class GameMain {
 				currentCol = col;
 				validInput = true; // input okay, exit loop
 			} else {
-				GUIlejos.invalidMove();
+				guiLejos.invalidMove();
 			}
 		} while (!validInput); // repeat until input is valid
 	}
@@ -220,15 +254,7 @@ public class GameMain {
 		// Otherwise, no change to current state (still GameState.PLAYING).
 	}
 
-	/** The entry main() method */
-	public static void main(String[] args) {
-		try {
-			new GameMain();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} // Let the constructor do the job
-	}
+
 
 	public static int ROWS() {
 		return Board.ROWS;

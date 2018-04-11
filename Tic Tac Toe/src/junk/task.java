@@ -1,3 +1,4 @@
+package junk;
 import lejos.hardware.BrickFinder;
 import lejos.hardware.lcd.*;
 import lejos.hardware.lcd.GraphicsLCD;

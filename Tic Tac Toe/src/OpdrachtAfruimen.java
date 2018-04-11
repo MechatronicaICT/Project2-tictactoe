@@ -1,13 +1,13 @@
-package test1;
+//package test1;
 
 public class OpdrachtAfruimen extends Opdracht {
 	
-	Cell[][] CleanCell; //kan ook naar opdracht
+	private Cell[][] CleanCell; //kan ook naar opdracht
 	
 	//constructor, opnieuw current?
-	OpdrachtAfruimen(Cell[][] given, int [] c){
+	OpdrachtAfruimen(Cell[][] given){
 		CleanCell=given;
-		current=c;
+		
 	}
 	
 	//hulpmethode
@@ -56,34 +56,11 @@ public class OpdrachtAfruimen extends Opdracht {
 		return out;
 	}
 	
-	/**clean playing field, logic zou aantal zetten van zowel X als O moeten bijhouden (zie X- en Ocount),
-	 * op die manier kunnen we makkelijk weten op welke positie we de stock moeten aanvullen*/
-	void cleaningField(int Xcount, int Ocount) {
-		for(int i=0;i<3;i++) {
-			for(int j=0;j<3;j++) {
-				int [] fieldPosition= {i,j};
-				switch(CleanCell[i][j].content){
-				case CROSS: {
-					MyRunnable.moveXY(current,fieldPosition);
-					MyRunnable.pick();
-					MyRunnable.moveXY(fieldPosition,getStockPosX(Xcount));
-					MyRunnable.place();
-					break;
-				}
-				case NOUGHT:{
-					MyRunnable.moveXY(current,fieldPosition);
-					MyRunnable.pick();
-					MyRunnable.moveXY(fieldPosition,getStockPosO(Ocount));
-					MyRunnable.place();
-					break;
-				}
-				case EMPTY:{
-					break;
-				}
-				}
-			}
-		}
+	Cell[][] getCleancell(){
+		return CleanCell;
 	}
+	
+	
 
 
 }

@@ -1,4 +1,4 @@
-package test1;
+//package test1;
 
 public class OpdrachtZet extends Opdracht {
 	
@@ -19,14 +19,8 @@ public class OpdrachtZet extends Opdracht {
 	}*/
 	
 	//perform move
-	void perform(){
-		MyRunnable.moveXY(current, start);
-		MyRunnable.pick();
-		MyRunnable.moveXY(start, end);
-		MyRunnable.place();
-		current=end;
-		count++;
-	}
+	
+	
 	
 	   
-	}
+}
