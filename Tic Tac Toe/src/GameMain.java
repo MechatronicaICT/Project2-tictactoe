@@ -21,12 +21,11 @@ public class GameMain {
 	// Named-constants for the dimensions
 	public static final int ROWS = 3;
 	public static final int COLS = 3;
-	public int score = 0;
 
 	int currentRow, currentCol; // the current seed's row and column
 	int state = 1;
 	
-	private static Scanner in = new Scanner(System.in); // input Scanner
+	//private static Scanner in = new Scanner(System.in); // input Scanner
 
 	
 	/** The entry main() method */
@@ -46,9 +45,9 @@ public class GameMain {
 	public GameMain(){
 
 		//opstarten kine thread
-		kine = new Kine(arrOpdrachten);
-		Thread tKine = new Thread(kine);
-		tKine.start();
+		//kine = new Kine(arrOpdrachten);
+		//Thread tKine = new Thread(kine);
+		//tKine.start();
 		
 		board = new Board(3, 3); // allocate game-board
 	
@@ -56,15 +55,15 @@ public class GameMain {
 		//opstarten Gui thread
 		guiLejos = new GUI(board);
 		//gebruiken wanneer classe een runnable is
-		//Thread tguiLejos = new Thread(guiLejos);
-		//tguiLejos.start();
+		Thread tguiLejos = new Thread(guiLejos);
+		tguiLejos.start();
 			
 		
 		
 
 		//testtje
-		OpdrachtZet oZet = new OpdrachtZet(score, null, null);
-		arrOpdrachten.add(oZet);
+		//OpdrachtZet oZet = new OpdrachtZet(score, null, null);
+		//arrOpdrachten.add(oZet);
 		///
 		
 		aiPlayer1 = new AIPlayerMinimax(board);
@@ -76,7 +75,7 @@ public class GameMain {
 		
 		
 		
-		System.out.println("sdfsdf");
+		//System.out.println("sdfsdf");
 		try {
 			
 			while (true) {
@@ -92,7 +91,7 @@ public class GameMain {
 			e.printStackTrace();
 		} // Let the constructor do the job1
 		
-		tKine.stop();
+		//tKine.stop();
 		
 	
 		
@@ -101,7 +100,7 @@ public class GameMain {
 	public void loopCase() {
 		// init state
 		/*
-		 * 1 = start toetstand
+		 * 1 = start state
 		 * 2 = bevindt zich in game modus
 		 * 3 = game ai zet
 		 * 4 = eind spel
@@ -117,7 +116,6 @@ public class GameMain {
 				//test array via runnable
 				OpdrachtZet oZet = new OpdrachtZet(currentCol, null, null);
 				arrOpdrachten.add(oZet);
-				score = score+ 1;
 				/////////////
 				
 				
