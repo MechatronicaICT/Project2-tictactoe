@@ -230,6 +230,7 @@ public class Kine implements Runnable {
 		current=zet.getEnd();
 		zet.Countincr();
 		
+		
 	}
     
     
