@@ -229,6 +229,7 @@ public class Kine implements Runnable {
 		place();
 		current=zet.getEnd();
 		zet.Countincr();
+		current=zet.getEnd();
 		
 	}
     
