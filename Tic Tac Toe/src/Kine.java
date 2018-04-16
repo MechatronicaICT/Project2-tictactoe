@@ -41,8 +41,13 @@ public class Kine implements Runnable {
     }
 
     public void run() {
+      	
+
+
         while(!Thread.interrupted()) {
     		try {
+    			
+    			
     			//check if there is something in the array
     			if(!Deque.isEmpty()) {
     				
@@ -53,7 +58,10 @@ public class Kine implements Runnable {
     				executeOpdracht(opd);
     				
         			//System.out.println("thread 1" +  opd.getClass().getName());
-        			   
+        			   		        			
+        			   				
+    				    				
+    				
     			}    			
     			
     			
@@ -175,7 +183,7 @@ public class Kine implements Runnable {
 		}
 	}
 	
-	// scan uitvoeren en oplossing teruggeven
+	// scan uitvoeren en opslossing teruggeven
 	void scanningField(OpdrachtScan scan) {
 		Cell[][] ScanCell = scan.getScanCell();
 		

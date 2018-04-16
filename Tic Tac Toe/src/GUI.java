@@ -1,7 +1,5 @@
 
 
-import java.util.Arrays;
-
 import lejos.hardware.BrickFinder;
 import lejos.hardware.Button;
 import lejos.hardware.lcd.*;
@@ -9,7 +7,7 @@ import lejos.hardware.lcd.GraphicsLCD;
 import lejos.utility.Delay;
 
 
-public class GUI implements Runnable{
+public class GUI {
 	
    protected Cell[][] cells; // the board's ROWS-by-COLS array of Cells
    protected Seed mySeed;    // computer's seed
@@ -19,10 +17,6 @@ public class GUI implements Runnable{
    public int COLS;
    public int Game;
    public int[] Zet = { 0 , 0};
-   public int amountOfGames;
-   public int gameMode; //0 = robot zet alles, 1 = mens zet blokjes zelf, robot scant achteraf
-   
-   int state_GUI = 1;
 	
 	public GUI(Board board) {
 		cells = board.cells;
@@ -31,42 +25,7 @@ public class GUI implements Runnable{
 		
 		//drawBoard();
 	}
-	
-	public void run(){
-        while(!Thread.interrupted()) {
-    		try {
-    			loopcase();
-    			//to slow down thread when doing nothing
-    			Thread.sleep(500);
-    		} catch (InterruptedException e) {
-    			// TODO Auto-generated catch block
-    			e.printStackTrace();
-    		}   
-    		   
-        }
-	}
-	public void loopcase() {
-		/*
-		 * 1 = start state (best of "N" games, scan mode of gewoon zetten)
-		 * 2 = game playing
-		 * 3 = end game
-		 */
-		switch (state_GUI) {
-		
-		case 1:
-				amountOfGames = amountOfGames();
-				gameMode = gameMode();
-				state_GUI = 2;
-				return;				
-		case 2: 
-				return;
-		case 3: 	
-				return;
-		//error			
-		default: System.out.println("fault");
-				return;	
-		}
-	}
+
 	public void drawBoard() {
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		final int SW = g.getWidth();
@@ -176,52 +135,8 @@ public class GUI implements Runnable{
 		}
 		return firstPlayer;
 	}
-	int amountOfGames() {
-		//choose "best of N games"
-		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
-		int amount = 1;
-		while (true) {
-			g.clear();
-			g.drawString("How many games?",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
-			g.drawString(Integer.toString(amount), g.getWidth()/2, 2*g.getHeight()/3, GraphicsLCD.HCENTER);
-			int but = Button.waitForAnyPress();
-            if ((but & Button.ID_ENTER) != 0) {
-            	break;
-            }
-            if ((but & Button.ID_LEFT) != 0) {
-            	amount--;
-            }
-            if ((but & Button.ID_RIGHT) != 0) {
-            	amount++;
-            }
-            amount = (amount <0) ? 0 : amount;
-		}
-		return amount;
-	}
-	
-	int gameMode() {
-		//choose game mode"
-		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
-		g.clear();
-		int gameMode = 0;
-		String explanation = "";
-		while (true) {
-			g.drawString("Which gamemode?",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
-			explanation = (gameMode == 0) ? "Normal mode" : "Scan mode";
-			g.drawString(explanation, g.getWidth()/2, 2*g.getHeight()/3, GraphicsLCD.HCENTER);
-			int but = Button.waitForAnyPress();
-            if ((but & Button.ID_ENTER) != 0) {
-            	break;
-            }
-            if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)||((but & Button.ID_UP) != 0)||((but & Button.ID_DOWN) != 0)) {
-            	gameMode = (gameMode == 0) ? 1 : 0;
-            }
-		}
-		return gameMode;
-	}
 	
 	/** Paint itself */
-	//MAG WEG!
 	public void paint() {
       for (int row = 0; row < ROWS; ++row) {
          for (int col = 0; col < COLS; ++col) {
@@ -242,7 +157,7 @@ public class GUI implements Runnable{
 	public void resetGame(){                                             
 	         Game = 0; // reset        
 	}                                       
-	// retrieve what game mode 
+	// retreive what game mode 
 	public int getGame(){                                                
 	         return Game; // return game mode
 	}
