@@ -19,6 +19,7 @@ public class GUI implements Runnable {
    public int[] Zet = { 0 , 0};
    public int amountOfGames;
    public int gameMode; //0 = robot zet alles, 1 = mens zet blokjes zelf, robot scant achteraf
+   public Seed firstPlayer;
    
    int state_GUI = 1;
 	
@@ -53,9 +54,12 @@ public class GUI implements Runnable {
 		case 1:
 				amountOfGames = amountOfGames();
 				gameMode = gameMode();
+				firstPlayer = firstPlayer();
 				state_GUI = 2;
+				Game = 1;
 				return;				
 		case 2: 
+				drawBoard();
 				return;
 		case 3: 	
 				return;
@@ -130,6 +134,7 @@ public class GUI implements Runnable {
 	public void clear() {
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		g.clear();
+		g.setFont(Font.getDefaultFont());
 	}
 	
 	public void winner(Seed winner) {
@@ -155,21 +160,18 @@ public class GUI implements Runnable {
 	Seed firstPlayer() {
 		Seed firstPlayer = Seed.CROSS;
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+		String explanation = "";
 		while (true) {
-			g.drawString("Who begins?", 100, 200, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
-			g.drawString("Human (X)", 100, 300, 0);
-			g.drawString("Computer (O)", 100, 300, 0);
-			if (firstPlayer == Seed.CROSS) {
-				g.drawLine(100, 300, 100, 400);
-			} else {
-				g.drawLine(0,0,0,0);
-			}
+			g.clear();
+			g.drawString("Who begins?",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+			explanation = (firstPlayer == Seed.CROSS) ? "Human (X)" : "Computer (O)";
+			g.drawString(explanation, g.getWidth()/2, 2*g.getHeight()/3, GraphicsLCD.HCENTER);
 			int but = Button.waitForAnyPress();
             if ((but & Button.ID_ENTER) != 0) {
             	break;
             }
-            if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)) {
-    			firstPlayer = (firstPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+            if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)||((but & Button.ID_UP) != 0)||((but & Button.ID_DOWN) != 0)) {
+            	firstPlayer = (firstPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
             }
 		}
 		return firstPlayer;
@@ -202,10 +204,10 @@ public class GUI implements Runnable {
 	int gameMode() {
 		//choose game mode"
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
-		g.clear();
 		int gameMode = 0;
 		String explanation = "";
 		while (true) {
+			g.clear();
 			g.drawString("Which gamemode?",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
 			explanation = (gameMode == 0) ? "Normal mode" : "Scan mode";
 			g.drawString(explanation, g.getWidth()/2, 2*g.getHeight()/3, GraphicsLCD.HCENTER);
@@ -254,12 +256,19 @@ public class GUI implements Runnable {
         Zet[2] = 0; // reset
         
 	}                                       
-	// retreive what game mode 
+	// retreive what zet
 	public int[] getZet(){                                                 
-        return Zet; // return game mode
+        return Zet; // return zet
 	}                                               
   
-
-
-
+	public int getGameMode(){                                                
+        return gameMode; // return game mode
+	}
+	
+	public int getAmountOfGames() {
+		return amountOfGames;
+	}
+	public Seed getFirstPlayer() {
+		return firstPlayer;
+	}
 }

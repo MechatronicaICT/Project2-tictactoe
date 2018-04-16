@@ -25,6 +25,10 @@ public class GameMain {
 	int currentRow, currentCol; // the current seed's row and column
 	int state = 1;
 	
+	public int amountOfGames;
+	public int gamesLeft;
+	public int gameMode; //0 = robot zet alles, 1 = mens zet blokjes zelf, robot scant achteraf
+
 	//private static Scanner in = new Scanner(System.in); // input Scanner
 
 	
@@ -32,7 +36,7 @@ public class GameMain {
 	public static void main(String[] args) {
 	
 		new GameMain();
-			
+		
 	}
 	
 	
@@ -112,19 +116,21 @@ public class GameMain {
 		
 		// start
 		case 1:
-			
 				//test array via runnable
 				OpdrachtZet oZet = new OpdrachtZet(currentCol, null, null);
 				arrOpdrachten.add(oZet);
 				/////////////
-				
-				
-    			
+
 				if(guiLejos.getGame() != 0) {
 					guiLejos.resetGame();
 					// Initialize the game-board and current status
-					initGame();
-					state = 2;
+					gameMode = guiLejos.getGameMode();
+					amountOfGames = guiLejos.getAmountOfGames();
+					gamesLeft = amountOfGames;
+					if (gamesLeft > 0) {
+						initGame();
+						state = 2;
+					}
 				}
 				return;
 								
@@ -136,7 +142,6 @@ public class GameMain {
 				if(!(Arrays. equals(arrCheck,guiLejos.getZet()))) {  
 					
 				playerMove(currentPlayer); // update the content, currentRow and currentCol
-				// guiLejos.paint(); // ask the board to paint itself
 				guiLejos.drawBoard();
 				updateGame(currentPlayer); // update currentState
 				// Switch player
@@ -190,7 +195,7 @@ public class GameMain {
 	/** Initialize the game-board contents and the current states */
 	public void initGame() {
 		board.init(); // clear the board contents
-		currentPlayer = guiLejos.firstPlayer();
+		currentPlayer = guiLejos.getFirstPlayer();
 		currentState = GameState.PLAYING; // ready to play
 		
 	}
