@@ -20,22 +20,38 @@ public class GUI implements Runnable {
    public int amountOfGames;
    public int gameMode; //0 = robot zet alles, 1 = mens zet blokjes zelf, robot scant achteraf
    public Seed firstPlayer;
+   public int[] score;
    
+   private int[] move_human;
+   private int[][] pos_fields;
+   
+   public boolean drawBoard = false;
+   public boolean moveNeeded = false;
+
+   
+   public boolean escape_pressed = false;
+   public boolean exit_program = false;
+   public boolean game_finished = false;
+   public Seed winner;
+   
+   public boolean firstGame = true;
+   public boolean finished = false;
+   public boolean invalidMove = false;
+
    int state_GUI = 1;
 	
 	public GUI(Board board) {
 		cells = board.cells;
 		ROWS = board.ROWS;
 		COLS = board.COLS;
-		
-		//drawBoard();
 	}
 	public void run(){
         while(!Thread.interrupted()) {
     		try {
     			loopcase();
+    			if (exit_program) break;
     			//to slow down thread when doing nothing
-    			Thread.sleep(500);
+    			Thread.sleep(50);
     		} catch (InterruptedException e) {
     			// TODO Auto-generated catch block
     			e.printStackTrace();
@@ -46,25 +62,65 @@ public class GUI implements Runnable {
 	public void loopcase() {
 		/*
 		 * 1 = start state (best of "N" games, scan mode of gewoon zetten)
-		 * 2 = game playing
-		 * 3 = end game
+		 * 2 = Waiting
+		 * 3 = Move needed from human
+		 * 4 = 1 game gewonnen
+		 * 5 = Best of N done, display score
 		 */
 		switch (state_GUI) {
 		
 		case 1:
-				amountOfGames = amountOfGames();
-				gameMode = gameMode();
-				firstPlayer = firstPlayer();
-				state_GUI = 2;
-				Game = 1;
+				if (!escape_pressed&&firstGame) amountOfGames = amountOfGames();
+				if (!escape_pressed&&firstGame&&!exit_program) gameMode = gameMode();
+				if (!escape_pressed&&!exit_program) firstPlayer = firstPlayer();
+				if (!escape_pressed) {
+					state_GUI = 2;
+					Game = 1;
+				}
 				return;				
 		case 2: 
-				drawBoard();
+				//if back knop gedrukt -> afsluiten
+				//if game = won -> naar case 4
+				//of als zet nodig is van de human
+				if(invalidMove) {
+					state_GUI = 6;
+				} else {
+					if(game_finished) {
+						state_GUI = 4;
+					}
+					else {
+						if(moveNeeded) {
+							state_GUI = 3;
+							move_human =  new int[] { 1 , 1 };
+							GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+							pos_fields = new int [][]{ { g.getWidth()/12, 5*g.getWidth() / 12, 9 * g.getWidth() / 12 }, { g.getHeight() / 12, 5 * g.getHeight() / 12, 9 * g.getHeight() / 12 } };
+						}
+						if (drawBoard) {
+							drawBoard();
+							drawBoard = false;
+						}
+					}
+				}
 				return;
-		case 3: 	
+		case 3: 
+				humanMove();
+				if (drawBoard) {
+					drawBoard();
+					drawBoard = false;
+				}
 				return;
-		//error			
-		default: System.out.println("fault");
+		case 4:
+				//iemand is gewonnen, overwinningstekst zetten, score, als oke nieuw spel beginnen
+				winner(winner);
+		        return;
+		case 5:
+				//final score weergeven
+				finished();
+				return;
+		case 6: //invalid move
+				invalidMove();
+				return;
+		default: System.out.println("fault GUI");
 				return;	
 		}
 	}
@@ -93,41 +149,47 @@ public class GUI implements Runnable {
 				}
 			}
 		}
+		g.setFont(Font.getDefaultFont());
+
 	}
 	
-	int[] humanMove() {
-		int[] move_human = { 1 , 1 };
+	void humanMove() {
+		//if back knop ingedrukt -> afsluiten
+		//while loop eruit en humanmove in de case2
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
-		final int SW = g.getWidth();
-		final int SH = g.getHeight();
-		int[][] pos_fields = { { SW/12, 5*SW / 12, 9 * SW / 12 }, { SH / 12, 5 * SH / 12, 9 * SH / 12 } };
-		while (true) {
-			drawBoard();
-			g.setStrokeStyle(1);
-			g.drawRect(pos_fields[0][move_human[1]], pos_fields[1][move_human[0]], 30, 30);
-			int but = Button.waitForAnyPress();
-            if ((but & Button.ID_ENTER) != 0) {
-            	break;
-            }
-            if ((but & Button.ID_LEFT) != 0) {
-            	move_human[1] = move_human[1]-1;
-            	if (move_human[1] < 0) move_human[1] = move_human[1]+3;
-            }
-            if ((but & Button.ID_RIGHT) != 0) {
-            	move_human[1] = move_human[1]+1;
-            	if (move_human[1] > 2) move_human[1] = move_human[1]-3;
-            }
-            if ((but & Button.ID_UP) != 0) {
-            	move_human[0] = move_human[0]-1;
-            	if (move_human[0] < 0) move_human[0] = move_human[0]+3;
-            }
-            if ((but & Button.ID_DOWN) != 0) {
-            	move_human[0] = move_human[0]+1;
-            	if (move_human[0] > 2) move_human[0] = move_human[0]-3;
-            }
-		}
-		g.setStrokeStyle(0);
-		return move_human;
+		g.setStrokeStyle(1);
+		g.drawRect(pos_fields[0][move_human[1]], pos_fields[1][move_human[0]], 30, 30);
+		int but = Button.waitForAnyPress();
+        if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)||((but & Button.ID_UP) != 0)||((but & Button.ID_DOWN) != 0)||((but & Button.ID_ENTER) != 0)) {
+        	drawBoard();
+        }
+        if ((but & Button.ID_ENTER) != 0) {
+    		g.setStrokeStyle(0);
+        	state_GUI = 2;
+        	Zet = move_human;
+        	moveNeeded = false;
+        }
+        else if ((but & Button.ID_LEFT) != 0) {
+        	move_human[1] = move_human[1]-1;
+        	if (move_human[1] < 0) move_human[1] = move_human[1]+3;
+        }
+        else if ((but & Button.ID_RIGHT) != 0) {
+        	move_human[1] = move_human[1]+1;
+        	if (move_human[1] > 2) move_human[1] = move_human[1]-3;
+        }
+        else if ((but & Button.ID_UP) != 0) {
+        	move_human[0] = move_human[0]-1;
+        	if (move_human[0] < 0) move_human[0] = move_human[0]+3;
+        }
+        else if ((but & Button.ID_DOWN) != 0) {
+        	move_human[0] = move_human[0]+1;
+        	if (move_human[0] > 2) move_human[0] = move_human[0]-3;
+        }
+        else if ((but & Button.ID_ESCAPE) != 0) {
+        	g.setStrokeStyle(0);
+        	escape_pressed = true;
+        	state_GUI = 1;
+        }
 		
 	}
 	
@@ -137,7 +199,7 @@ public class GUI implements Runnable {
 		g.setFont(Font.getDefaultFont());
 	}
 	
-	public void winner(Seed winner) {
+	void winner(Seed winner) {
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		g.clear();
 		g.setFont(Font.getDefaultFont());
@@ -146,15 +208,50 @@ public class GUI implements Runnable {
 		if (winner == Seed.NOUGHT) s = "Player O Won";
 		if (winner == Seed.EMPTY) s = "It's a Draw!";
 		g.drawString(s, g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
-		Delay.msDelay(3000);
+		g.drawString(Integer.toString(score[0]) + " - " + Integer.toString(score[1]), g.getWidth()/2, 2*g.getHeight()/3, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		int but = Button.waitForAnyPress();
+        if ((but & Button.ID_ENTER) != 0) {
+        	state_GUI = 1;
+        	game_finished = false;
+        	if (firstGame) firstGame = false;
+        	if (finished) state_GUI = 5;
+        }
+
+	}
+	
+	void finished() {
+		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+		g.clear();
+		g.setFont(Font.getDefaultFont());
+		String s ="";
+		if (score[0] > score[1]) s = "Human (X) Won!";
+		else if (score[0] < score[1]) s = "Computer (O) Won";
+		else s = "It's a Draw!";
+		g.drawString(s, g.getWidth()/2, g.getHeight()/4, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		g.drawString("Final Score:", g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		g.drawString(Integer.toString(score[0]) + " - " + Integer.toString(score[1]), g.getWidth()/2, 3*g.getHeight()/4, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		int but = Button.waitForAnyPress();
+        if ((but & Button.ID_ENTER) != 0) {
+        	g.clear();
+        	state_GUI = 2;
+        	exit_program = true;
+        }
 	}
 	
 	public void invalidMove() {
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		g.clear();
 		g.setFont(Font.getDefaultFont());
-		g.drawString("Invalid Move, please try again...",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
-		Delay.msDelay(1000);
+		g.drawString("Invalid Move",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		g.drawString("try again...",  g.getWidth()/2, 2*g.getHeight()/3, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+
+		int but = Button.waitForAnyPress();
+        if ((but & Button.ID_ENTER) != 0) {
+        	g.clear();
+        	state_GUI = 2;
+        	invalidMove = false;
+        }
+
 	}
 	
 	Seed firstPlayer() {
@@ -170,8 +267,14 @@ public class GUI implements Runnable {
             if ((but & Button.ID_ENTER) != 0) {
             	break;
             }
-            if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)||((but & Button.ID_UP) != 0)||((but & Button.ID_DOWN) != 0)) {
+            else if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)||((but & Button.ID_UP) != 0)||((but & Button.ID_DOWN) != 0)) {
             	firstPlayer = (firstPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+            }
+            else if ((but & Button.ID_ESCAPE) != 0) {
+            	escape_pressed = true;
+            	state_GUI = 1;
+            	firstGame = true;
+            	break;
             }
 		}
 		return firstPlayer;
@@ -190,11 +293,15 @@ public class GUI implements Runnable {
             if ((but & Button.ID_ENTER) != 0) {
             	break;
             }
-            if ((but & Button.ID_LEFT) != 0) {
+            else if ((but & Button.ID_LEFT) != 0) {
             	amount--;
             }
-            if ((but & Button.ID_RIGHT) != 0) {
+            else if ((but & Button.ID_RIGHT) != 0) {
             	amount++;
+            }
+            else if ((but & Button.ID_ESCAPE) != 0) {
+            	exit_program = true;
+            	break;
             }
             amount = (amount <0) ? 0 : amount;
 		}
@@ -215,60 +322,52 @@ public class GUI implements Runnable {
             if ((but & Button.ID_ENTER) != 0) {
             	break;
             }
-            if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)||((but & Button.ID_UP) != 0)||((but & Button.ID_DOWN) != 0)) {
+            else if (((but & Button.ID_LEFT) != 0)||((but & Button.ID_RIGHT) != 0)||((but & Button.ID_UP) != 0)||((but & Button.ID_DOWN) != 0)) {
             	gameMode = (gameMode == 0) ? 1 : 0;
+            }
+            else if ((but & Button.ID_ESCAPE) != 0) {
+            	escape_pressed = true;
+            	state_GUI = 1;
+            	break;
             }
 		}
 		return gameMode;
 	}
 	
-	
-	
-	/** Paint itself */
-	//MAG WEG!!!!//
-	public void paint() {
-      for (int row = 0; row < ROWS; ++row) {
-         for (int col = 0; col < COLS; ++col) {
-            cells[row][col].paint();   // each cell paints itself
-            if (col < COLS - 1) System.out.print("|");
-         }
-         System.out.println();
-         if (row < ROWS - 1) {
-            System.out.println("-----------");
-         }
-      }
-   }
-	
-// communicatie tussen Gui en Game main	
-	
-	// game mode resetten
-	public void resetGame(){                                             
-	         Game = 0; // reset        
-	}                                       
-	// retreive what game mode 
-	public int getGame(){                                                
-	         return Game; // return game mode
-	}
-	
-	// speler zet opvragen
-	public void resetZet(){                                             
-        Zet[1] = 0; // reset                                             
-        Zet[2] = 0; // reset
-        
-	}                                       
-	// retreive what zet
-	public int[] getZet(){                                                 
-        return Zet; // return zet
-	}                                               
-  
-	public int getGameMode(){                                                
-        return gameMode; // return game mode
-	}
-	
-	public int getAmountOfGames() {
-		return amountOfGames;
-	}
-	public Seed getFirstPlayer() {
-		return firstPlayer;
-	}
+//	
+//// communicatie tussen Gui en Game main	
+//	
+//	// game mode resetten
+//	public void resetGame(){                                             
+//	         Game = 0; // reset        
+//	}                                       
+//	// retreive what game mode 
+//	public int getGame(){                                                
+//	         return Game; // return game mode
+//	}
+//	
+//	// speler zet opvragen
+//	public void resetZet(){                                             
+//        Zet[1] = 0; // reset                                             
+//        Zet[2] = 0; // reset
+//        
+//	}                                       
+//	// retrieve what zet
+//	public int[] getZet(){                                                 
+//        return Zet; // return zet
+//	}                                               
+//  
+//	public int getGameMode(){                                                
+//        return gameMode; // return game mode
+//	}
+//	
+//	public int getAmountOfGames() {
+//		return amountOfGames;
+//	}
+//	public Seed getFirstPlayer() {
+//		return firstPlayer;
+//	}
+//	public void moveNeeded() {
+//		moveNeeded = 1;
+//	}
 }

@@ -41,16 +41,10 @@ public class Kine implements Runnable {
     }
 
     public void run() {
-      	
-
-
         while(!Thread.interrupted()) {
-    		try {
-    			
-    			
+    		try {	
     			//check if there is something in the array
     			if(!Deque.isEmpty()) {
-    				
     				
     				Opdracht opd = Deque.peekLast();
     				System.out.println("thread 1" +  opd.getClass().getName());
@@ -58,27 +52,22 @@ public class Kine implements Runnable {
     				executeOpdracht(opd);
     				
         			//System.out.println("thread 1" +  opd.getClass().getName());
-        			   		        			
-        			   				
-    				    				
-    				
+        			   		     
     			}    			
     			
     			
-    			//to slop down threath when doing nothing
+    			//to slow down thread when doing nothing
     			Thread.sleep(500);
     		} catch (InterruptedException e) {
     			// TODO Auto-generated catch block
     			e.printStackTrace();
     		}   
-    		   
         }
     }
     
 	public void executeOpdracht(Opdracht opd) {
 
 		switch (opd.getClass().getName()) {
-		
 		
 		case "OpdrachtZet":
 			OpdrachtZet opdZet = (OpdrachtZet) Deque.removeLast();  
