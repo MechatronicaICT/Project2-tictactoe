@@ -32,6 +32,10 @@ public class GameMain {
 	public int gameMode; //0 = robot zet alles, 1 = mens zet blokjes zelf, robot scant achteraf
 	
 	public int[] score = {0,0};
+	
+	public int[][] stock_cross = {{3,0},{3,1},{3,2},{4,0},{4,1}};
+	public int[][] stock_nought = {{4,2},{5,0},{5,1},{5,2},{6,0}};
+
 
 	/** The entry main() method */
 	public static void main(String[] args) {
@@ -52,13 +56,12 @@ public class GameMain {
 		//opstarten kine thread
 		kine = new Kine(arrOpdrachten);
 		Thread tKine = new Thread(kine);
-		//tKine.start();
+		tKine.start();
 
 		board = new Board(3, 3); // allocate game-board
 
 		//opstarten Gui thread
 		guiLejos = new GUI(board);
-		//gebruiken wanneer classe een runnable is
 		Thread tguiLejos = new Thread(guiLejos);
 		tguiLejos.start();
 
@@ -80,8 +83,7 @@ public class GameMain {
 					state = 1;
 					guiLejos.escape_pressed = false;
 				} else if (guiLejos.exit_program) {
-					//tKine.stop();
-					//tguiLejos.stop();
+					kine.exit_program = true;
 					break;
 				}
 				//main opdrachten trager laten draaien
@@ -93,7 +95,6 @@ public class GameMain {
 			e.printStackTrace();
 		} // Let the constructor do the job1
 
-		//tKine.stop();
 	}
 
 	public void loopCase() {
@@ -158,6 +159,13 @@ public class GameMain {
 				board.cells[row][col].content = currentPlayer;
 				currentRow = row;
 				currentCol = col;
+				
+				
+				int[] stock_amount = amountOfCrossesandNoughts();
+				int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
+				OpdrachtZet oZet = new OpdrachtZet(1, start_pos, new int[] {row,col});
+				arrOpdrachten.add(oZet);
+
 				guiLejos.drawBoard = true;
 				if (hasWon(currentPlayer)) { // check for win
 					currentState = (currentPlayer == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
@@ -332,6 +340,21 @@ public class GameMain {
 				|| currentRow + currentCol == 2 // 3-in-the-opposite-diagonal
 				&& board.cells[0][2].content == theSeed && board.cells[1][1].content == theSeed
 				&& board.cells[2][0].content == theSeed);
+	}
+	
+	public int[] amountOfCrossesandNoughts() {
+		int cross = 0;
+		int nought = 0;
+		for (int row = 0; row < ROWS; ++row) {
+			for (int col = 0; col < COLS; ++col) {
+				if (board.cells[row][col].content == Seed.NOUGHT) {
+					nought++;
+				} else if (board.cells[row][col].content == Seed.CROSS) {
+					cross++;
+				}
+			}
+		}
+		return new int[] {cross,nought};
 	}
 
 }
