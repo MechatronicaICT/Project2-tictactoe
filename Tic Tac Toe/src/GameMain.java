@@ -115,7 +115,14 @@ public class GameMain {
 			//OpdrachtZet oZet = new OpdrachtZet(currentCol, null, null);
 			//arrOpdrachten.add(oZet);
 			/////////////
-
+			
+			if(guiLejos.clear_field) {
+				//return all blocks to starting position
+				guiLejos.clear_field = false;
+				OpdrachtAfruimen oClear = new OpdrachtAfruimen(board.cells);
+				arrOpdrachten.add(oClear);
+			}
+			
 			if(guiLejos.Game != 0) {
 				guiLejos.Game = 0;
 				// Initialize the game-board and current status
@@ -146,8 +153,21 @@ public class GameMain {
 
 		case 3: //Read move from human
 			if (!guiLejos.moveNeeded) {
-				Move = guiLejos.Zet;
-				state = 4;
+				if (gameMode == 0) {
+					Move = guiLejos.Zet;
+					state = 4;
+				} else if (gameMode == 1) {
+					OpdrachtScan oScan = new OpdrachtScan(board.cells);
+					arrOpdrachten.add(oScan);
+					while(true) {
+						if (kine.scanDone) {
+							kine.scanDone = false;
+							Move = kine.Zet;
+							state = 4;
+							break;
+						}
+					}
+				}
 			}
 			return;
 
@@ -160,12 +180,25 @@ public class GameMain {
 				currentRow = row;
 				currentCol = col;
 				
+				if (gameMode == 0) {
+					//normal mode
+					int[] stock_amount = amountOfCrossesandNoughts();
+					int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
+					OpdrachtZet oZet = new OpdrachtZet(start_pos, new int[] {row,col});
+					arrOpdrachten.add(oZet);
+				} else if (gameMode == 1) {
+					//scan mode
+					if (currentPlayer == Seed.CROSS) {
+						//move human -> block is already placed!!
+					} else if (currentPlayer == Seed.NOUGHT) {
+						//move AI -> place block
+						int[] stock_amount = amountOfCrossesandNoughts();
+						int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
+						OpdrachtZet oZet = new OpdrachtZet(start_pos, new int[] {row,col});
+						arrOpdrachten.add(oZet);
+					}
+				}
 				
-				int[] stock_amount = amountOfCrossesandNoughts();
-				int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
-				OpdrachtZet oZet = new OpdrachtZet(1, start_pos, new int[] {row,col});
-				arrOpdrachten.add(oZet);
-
 				guiLejos.drawBoard = true;
 				if (hasWon(currentPlayer)) { // check for win
 					currentState = (currentPlayer == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
