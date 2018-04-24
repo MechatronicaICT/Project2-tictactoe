@@ -32,6 +32,7 @@ public class GUI implements Runnable {
    public boolean escape_pressed = false;
    public boolean exit_program = false;
    public boolean game_finished = false;
+   public boolean clear_field = false;
    public Seed winner;
    
    public boolean firstGame = true;
@@ -103,7 +104,11 @@ public class GUI implements Runnable {
 				}
 				return;
 		case 3: 
-				humanMove();
+				if (gameMode == 0) {
+					humanMove();
+				} else if (gameMode == 1) {
+					scanMove();
+				}
 				if (drawBoard) {
 					drawBoard();
 					drawBoard = false;
@@ -150,6 +155,16 @@ public class GUI implements Runnable {
 			}
 		}
 		g.setFont(Font.getDefaultFont());
+
+	}
+	
+	void scanMove() {
+		//in scan mode: press ok to scan
+		int but = Button.waitForAnyPress();
+        if ((but & Button.ID_ENTER) != 0) {
+        	//block is placed
+        	moveNeeded = false;
+        }
 
 	}
 	
@@ -200,6 +215,7 @@ public class GUI implements Runnable {
 	}
 	
 	void winner(Seed winner) {
+		//Winner of 1 game
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		g.clear();
 		g.setFont(Font.getDefaultFont());
@@ -215,11 +231,13 @@ public class GUI implements Runnable {
         	game_finished = false;
         	if (firstGame) firstGame = false;
         	if (finished) state_GUI = 5;
+        	clear_field = true;
         }
 
 	}
 	
 	void finished() {
+		//Final Screen!
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		g.clear();
 		g.setFont(Font.getDefaultFont());

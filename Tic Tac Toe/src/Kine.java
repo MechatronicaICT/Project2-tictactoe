@@ -26,7 +26,11 @@ public class Kine implements Runnable {
 	
 	int [] current= {0,0}; //where we currently are
     
-	boolean exit_program = false;
+	public boolean exit_program = false;
+	
+	public boolean scanDone = false;
+	public int[] Zet = { 0 , 0};
+
     //colorsensor
 	public EV3ColorSensor colorsensor = new EV3ColorSensor(SensorPort.S1);
 	public SampleProvider color = colorsensor.getColorIDMode();
@@ -76,21 +80,22 @@ public class Kine implements Runnable {
 			return;
 			
 		case "OpdrachtAfruimen":
-			OpdrachtAfruimen opdAfruimen = (OpdrachtAfruimen) Deque.removeLast();  
+			OpdrachtAfruimen opdAfruimen = (OpdrachtAfruimen) Deque.removeFirst();  
 			
 			cleaningField(1,1,opdAfruimen);
 			
 			return;
 			
 		case "OpdrachtScan":
-			OpdrachtScan opdScan = (OpdrachtScan) Deque.removeLast();  
+			OpdrachtScan opdScan = (OpdrachtScan) Deque.removeFirst();  
 			
 			scanningField(opdScan);
 			
+			scanDone = true;
 			return;
 			
 		case "OpdrachtHoming":
-			OpdrachtHoming opdHoming = (OpdrachtHoming) Deque.removeLast();  
+			OpdrachtHoming opdHoming = (OpdrachtHoming) Deque.removeFirst();  
 			
 			
 			Homing(opdHoming.getHomeposition());
@@ -198,7 +203,7 @@ public class Kine implements Runnable {
 						ScanCell[i][j].content=Seed.NOUGHT;//Nought is yellow
 						break loop;
 					}
-					else break; //This remains empty so nothing is placed
+					else return; //This remains empty so nothing is placed
 					
 				}
 				}
