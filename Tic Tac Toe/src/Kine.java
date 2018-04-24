@@ -76,21 +76,21 @@ public class Kine implements Runnable {
 			return;
 			
 		case "OpdrachtAfruimen":
-			OpdrachtAfruimen opdAfruimen = (OpdrachtAfruimen) Deque.removeLast();  
+			OpdrachtAfruimen opdAfruimen = (OpdrachtAfruimen) Deque.removeFirst();  
 			
 			cleaningField(1,1,opdAfruimen);
 			
 			return;
 			
 		case "OpdrachtScan":
-			OpdrachtScan opdScan = (OpdrachtScan) Deque.removeLast();  
+			OpdrachtScan opdScan = (OpdrachtScan) Deque.removeFirst();  
 			
 			scanningField(opdScan);
 			
 			return;
 			
 		case "OpdrachtHoming":
-			OpdrachtHoming opdHoming = (OpdrachtHoming) Deque.removeLast();  
+			OpdrachtHoming opdHoming = (OpdrachtHoming) Deque.removeFirst();  
 			
 			
 			Homing(opdHoming.getHomeposition());
