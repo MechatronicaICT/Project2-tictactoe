@@ -39,6 +39,22 @@ public class Board {  // save as Board.java
    public int Rows() {
 	   return ROWS;
    }
+   
+   public int[] amountOfCrossesandNoughts() {
+		int cross = 0;
+		int nought = 0;
+		for (int row = 0; row < ROWS; ++row) {
+			for (int col = 0; col < COLS; ++col) {
+				if (cells[row][col].content == Seed.NOUGHT) {
+					nought++;
+				} else if (cells[row][col].content == Seed.CROSS) {
+					cross++;
+				}
+			}
+		}
+		return new int[] {cross,nought};
+	}
+
      
 
 }

@@ -122,8 +122,9 @@ public class GUI implements Runnable {
 				//final score weergeven
 				finished();
 				return;
-		case 6: //invalid move
-				invalidMove();
+		case 6: //invalid move or scan
+				if (gameMode == 0) invalidMove();
+				else if (gameMode == 1) invalidScan();
 				return;
 		default: System.out.println("fault GUI");
 				return;	
@@ -160,10 +161,20 @@ public class GUI implements Runnable {
 	
 	void scanMove() {
 		//in scan mode: press ok to scan
+		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+		g.clear();
+		g.setFont(Font.getDefaultFont());
+		g.drawString("Waiting for human move",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+
 		int but = Button.waitForAnyPress();
         if ((but & Button.ID_ENTER) != 0) {
         	//block is placed
         	moveNeeded = false;
+        	state_GUI = 2;
+        }
+        else if ((but & Button.ID_ESCAPE) != 0) {
+        	escape_pressed = true;
+        	state_GUI = 1;
         }
 
 	}
@@ -268,8 +279,24 @@ public class GUI implements Runnable {
         	g.clear();
         	state_GUI = 2;
         	invalidMove = false;
+        	drawBoard = true;
         }
+	}
+	
+	public void invalidScan() {
+		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+		g.clear();
+		g.setFont(Font.getDefaultFont());
+		g.drawString("Invalid Scan",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		g.drawString("try again...",  g.getWidth()/2, 2*g.getHeight()/3, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
 
+		int but = Button.waitForAnyPress();
+        if ((but & Button.ID_ENTER) != 0) {
+        	g.clear();
+        	state_GUI = 2;
+        	invalidMove = false;
+        	drawBoard = true;
+        }
 	}
 	
 	Seed firstPlayer() {

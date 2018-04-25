@@ -3,15 +3,15 @@ public class OpdrachtScan extends Opdracht {
 
 	/**ScanCell contains the positions of the already placed Crosses and Noughts. When ScanCell is empty it 
 	 * has to measure the colorId to see if a block is placed*/
-	private Cell[][] ScanCell; //kan ook naar opdracht
+	private Board ScanBoard; //kan ook naar opdracht
 	
-	public OpdrachtScan(Cell[][] given) {
-		 ScanCell=given;
+	public OpdrachtScan(Board given) {
+		ScanBoard=given;
 	}
 	
 	//return cells
-	Cell[][] getScanCell(){
-		return ScanCell;
+	Board getScanBoard(){
+		return ScanBoard;
 	}
 	
 	 

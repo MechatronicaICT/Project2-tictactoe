@@ -65,11 +65,6 @@ public class GameMain {
 		Thread tguiLejos = new Thread(guiLejos);
 		tguiLejos.start();
 
-		//testtje
-		//OpdrachtZet oZet = new OpdrachtZet(score, null, null);
-		//arrOpdrachten.add(oZet);
-		///
-
 		aiPlayer1 = new AIPlayerMinimax(board); //Difficult AI
 		aiPlayer1.setSeed(Seed.NOUGHT);
 		aiPlayer2 = new AIPlayerTableLookup(board); //Easy AI
@@ -119,7 +114,7 @@ public class GameMain {
 			if(guiLejos.clear_field) {
 				//return all blocks to starting position
 				guiLejos.clear_field = false;
-				OpdrachtAfruimen oClear = new OpdrachtAfruimen(board.cells);
+				OpdrachtAfruimen oClear = new OpdrachtAfruimen(board);
 				arrOpdrachten.add(oClear);
 			}
 			
@@ -152,18 +147,26 @@ public class GameMain {
 			return;
 
 		case 3: //Read move from human
-			if (!guiLejos.moveNeeded) {
-				if (gameMode == 0) {
+			if (gameMode == 0) {
+				if (!guiLejos.moveNeeded) {
 					Move = guiLejos.Zet;
 					state = 4;
-				} else if (gameMode == 1) {
-					OpdrachtScan oScan = new OpdrachtScan(board.cells);
+				}
+			} else if (gameMode == 1) {
+				if (!guiLejos.moveNeeded) {
+					OpdrachtScan oScan = new OpdrachtScan(board);
 					arrOpdrachten.add(oScan);
 					while(true) {
 						if (kine.scanDone) {
 							kine.scanDone = false;
-							Move = kine.Zet;
-							state = 4;
+							if (kine.Zet == null) {
+								//invalidScan()
+								guiLejos.invalidMove = true;
+								guiLejos.moveNeeded = true;
+							} else {
+								Move = kine.Zet;
+								state = 4;
+							}
 							break;
 						}
 					}
@@ -182,7 +185,7 @@ public class GameMain {
 				
 				if (gameMode == 0) {
 					//normal mode
-					int[] stock_amount = amountOfCrossesandNoughts();
+					int[] stock_amount = board.amountOfCrossesandNoughts();
 					int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
 					OpdrachtZet oZet = new OpdrachtZet(start_pos, new int[] {row,col});
 					arrOpdrachten.add(oZet);
@@ -192,7 +195,7 @@ public class GameMain {
 						//move human -> block is already placed!!
 					} else if (currentPlayer == Seed.NOUGHT) {
 						//move AI -> place block
-						int[] stock_amount = amountOfCrossesandNoughts();
+						int[] stock_amount = board.amountOfCrossesandNoughts();
 						int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
 						OpdrachtZet oZet = new OpdrachtZet(start_pos, new int[] {row,col});
 						arrOpdrachten.add(oZet);
@@ -375,19 +378,6 @@ public class GameMain {
 				&& board.cells[2][0].content == theSeed);
 	}
 	
-	public int[] amountOfCrossesandNoughts() {
-		int cross = 0;
-		int nought = 0;
-		for (int row = 0; row < ROWS; ++row) {
-			for (int col = 0; col < COLS; ++col) {
-				if (board.cells[row][col].content == Seed.NOUGHT) {
-					nought++;
-				} else if (board.cells[row][col].content == Seed.CROSS) {
-					cross++;
-				}
-			}
-		}
-		return new int[] {cross,nought};
-	}
+
 
 }

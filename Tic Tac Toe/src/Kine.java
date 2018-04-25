@@ -16,9 +16,9 @@ import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.SampleProvider;
 //import lejos.utility.Delay;
-import lejos.hardware.ev3.EV3;
+//import lejos.hardware.ev3.EV3;
 //import lejos.hardware.lcd.LCD;
-import lejos.hardware.lcd.TextLCD;
+//import lejos.hardware.lcd.TextLCD;
 
 public class Kine implements Runnable {
 	private ArrayDeque<Opdracht> Deque = new ArrayDeque<>();
@@ -32,11 +32,8 @@ public class Kine implements Runnable {
 	public int[] Zet = { 0 , 0};
 
     //colorsensor
-	public EV3ColorSensor colorsensor = new EV3ColorSensor(SensorPort.S1);
-	public SampleProvider color = colorsensor.getColorIDMode();
-	public float[] sample = new float[color.sampleSize()];
 
-	private int motorSpeed = 250;
+	private int motorSpeed = 400;
 
 	
     public Kine(ArrayDeque<Opdracht> deque) {
@@ -52,7 +49,7 @@ public class Kine implements Runnable {
     			if(!Deque.isEmpty()) {
     				
     				Opdracht opd = Deque.peekFirst();
-    				System.out.println("thread 1" +  opd.getClass().getName());
+    				System.out.println(opd.getClass().getName());
     			  				
     				executeOpdracht(opd);
     				
@@ -60,7 +57,7 @@ public class Kine implements Runnable {
     			
     			if (exit_program) break; //exit program
     			//to slow down thread when doing nothing
-    			Thread.sleep(500);
+    			Thread.sleep(200);
     		} catch (InterruptedException e) {
     			// TODO Auto-generated catch block
     			e.printStackTrace();
@@ -82,21 +79,20 @@ public class Kine implements Runnable {
 		case "OpdrachtAfruimen":
 			OpdrachtAfruimen opdAfruimen = (OpdrachtAfruimen) Deque.removeFirst();  
 			
-			cleaningField(1,1,opdAfruimen);
+			cleaningField(opdAfruimen);
 			
 			return;
 			
 		case "OpdrachtScan":
 			OpdrachtScan opdScan = (OpdrachtScan) Deque.removeFirst();  
 			
-			scanningField(opdScan);
+			Zet = scanningField(opdScan);
 			
 			scanDone = true;
 			return;
 			
 		case "OpdrachtHoming":
 			OpdrachtHoming opdHoming = (OpdrachtHoming) Deque.removeFirst();  
-			
 			
 			Homing(opdHoming.getHomeposition());
 			
@@ -117,35 +113,48 @@ public class Kine implements Runnable {
     /**clean playing field, logic zou aantal zetten van zowel X als O moeten bijhouden (zie X- en Ocount),
 	 * op die manier kunnen we makkelijk weten op welke positie we de stock moeten aanvullen*/
 
-	void cleaningField(int Xcount, int Ocount, OpdrachtAfruimen afruim) {
-		
-		Cell[][] CleanCell = afruim.getCleancell();//cleancells onthouden
+	void cleaningField(OpdrachtAfruimen afruim) {
+		int[][] stock_cross = {{3,0},{3,1},{3,2},{4,0},{4,1}};
+		int[][] stock_nought = {{4,2},{5,0},{5,1},{5,2},{6,0}};
+		boolean block_placed;
+
+		Board CleanBoard = afruim.getCleanBoard();//cleancells onthouden
+		int[] Count = CleanBoard.amountOfCrossesandNoughts();
+
 		for(int i=0;i<3;i++) {
 			for(int j=0;j<3;j++) {
-				int [] fieldPosition= {i,j};
-				switch(CleanCell[i][j].content){
-				case CROSS: {
-					moveXY(current,fieldPosition);
-					pick();
-					moveXY(fieldPosition,afruim.getStockPosX(Xcount));
-					place();
-					break;
-				}
-				case NOUGHT:{
-					moveXY(current,fieldPosition);
-					pick();
-					moveXY(fieldPosition,afruim.getStockPosO(Ocount));
-					place();
-					break;
-				}
-				case EMPTY:{
-					break;
-				}
+				block_placed = false;
+				while(!exit_program && !block_placed) {
+					block_placed = true;
+					int [] fieldPosition= {i,j};
+					switch(CleanBoard.cells[i][j].content){
+					case CROSS: {
+						moveXY(current,fieldPosition);
+						pick();
+						moveXY(fieldPosition,stock_cross[Count[0]-1]);
+						place();
+						current = stock_cross[Count[0]-1];
+						Count[0]--;
+						break;
+					}
+					case NOUGHT:{
+						moveXY(current,fieldPosition);
+						pick();
+						moveXY(fieldPosition,stock_nought[Count[1]-1]);
+						place();
+						current = stock_nought[Count[1]-1];
+						Count[1]--;
+						break;
+					}
+					case EMPTY:{
+						break;
+					}
+					}
 				}
 			}
 		}
 	}
-	
+
 	// home positie resetten
 	void Homing(int[] Homeposition) {
 		//data van opdracht stockeren
@@ -177,55 +186,55 @@ public class Kine implements Runnable {
 	}
 	
 	// scan uitvoeren en opslossing teruggeven
-	void scanningField(OpdrachtScan scan) {
-		Cell[][] ScanCell = scan.getScanCell();
-		
-		loop:{
+	int[] scanningField(OpdrachtScan scan) {
+		Board ScanBoard = scan.getScanBoard();
+		int [] Move_Scanned = {0,0};
 		for(int i=0;i<3;i++) {
 			for(int j=0;j<3;j++) {
 				int [] fieldPosition= {i,j};
-				switch(ScanCell[i][j].content){
+				switch(ScanBoard.cells[i][j].content){
 				case CROSS: {					
-					return; //cell had already a cross, so no block can be placed here
+					break; //cell had already a cross, so no block can be placed here
 				}
 				case NOUGHT:{
-					return;
+					break;
 				}
 				case EMPTY:{
 					moveXY(current,fieldPosition);
 					current=fieldPosition;
-					if(measurecolor()==0){
-						
-						ScanCell[i][j].content=Seed.CROSS; //cross is red
-						break loop; // the robot found the block that was placed so it doesn't have to scan the other positions
+					//Delay.msDelay(20);
+					int measured_color = measurecolor();
+					System.out.print(Integer.toString(measured_color)+ "...");
+					//Delay.msDelay(20);
+					if(measured_color==0){
+						//ScanBoard.cells[i][j].content=Seed.CROSS; //cross is red
+						Move_Scanned = new int[] {i,j};
+						return Move_Scanned;
 					}
-					else if(measurecolor()==3){
-						ScanCell[i][j].content=Seed.NOUGHT;//Nought is yellow
-						break loop;
+					else if(measured_color==3){
+						//ScanBoard.cells[i][j].content=Seed.NOUGHT;//Nought is yellow
+						Move_Scanned = new int[] {i,j};
+						return Move_Scanned;
 					}
-					else return; //This remains empty so nothing is placed
+					break; //This remains empty so nothing is placed
 					
 				}
 				}
 			}
 		}
-		}
-	
+		return null;
 	
 	}
 	
 	void executeZet(OpdrachtZet zet){
-		System.out.println(Integer.toString(zet.getStart()[0]));
-		System.out.println(Integer.toString(zet.getStart()[1]));
+		//System.out.println(Integer.toString(zet.getStart()[0]));
+		//System.out.println(Integer.toString(zet.getStart()[1]));
 
 		moveXY(current, zet.getStart());
 		pick();
 		moveXY(zet.getStart(), zet.getEnd());
 		place();
-		current=zet.getEnd();
-		zet.Countincr();
-		current=zet.getEnd();
-		
+		current=zet.getEnd();		
 	}
     
     
@@ -313,21 +322,25 @@ public class Kine implements Runnable {
 
 	 
 	int measurecolor(){
-			//while(true){
-			//EV3 ev3 =(EV3) BrickFinder.getLocal();
-	 //TextLCD lcd = ev3.getTextLCD();
-	 //color ID. 0 = red; 1 = green; 2 = blue; 3 = yellow; 4 = magenta; 5 = orange; 6 = white; 7 = black; 8 = pink; 9 = gray; 10 = light gray	 
-	 //public static final float limitColor=2;
-	 color.fetchSample(sample, 0);
-	 int colorId=(int)sample[0];
-	 //https://www.programcreek.com/java-api-examples/?api=lejos.hardware.sensor.EV3ColorSensor
-	 //lcd.drawInt(colorId,0,0);
-	 //System.out.println(colorId);
-	 colorsensor.close();
-	 return colorId;
-	 //Delay.msDelay(9000);
-		}
-	 //}
+		EV3ColorSensor colorsensor = new EV3ColorSensor(SensorPort.S1);
+		SampleProvider color = colorsensor.getColorIDMode();
+
+		float[] sample = new float[color.sampleSize()];
+		//while(true){
+		//EV3 ev3 =(EV3) BrickFinder.getLocal();
+		 //TextLCD lcd = ev3.getTextLCD();
+		 //color ID. 0 = red; 1 = green; 2 = blue; 3 = yellow; 4 = magenta; 5 = orange; 6 = white; 7 = black; 8 = pink; 9 = gray; 10 = light gray	 
+		 //public static final float limitColor=2;
+		 color.fetchSample(sample, 0);
+		 int colorId=(int)sample[0];
+		 //https://www.programcreek.com/java-api-examples/?api=lejos.hardware.sensor.EV3ColorSensor
+		 //lcd.drawInt(colorId,0,0);
+		 //System.out.println(colorId);
+		 colorsensor.close();
+		 return colorId;
+		 //Delay.msDelay(9000);
+	}
+
 	 
 
     
