@@ -1,4 +1,4 @@
-//package test1;
+package test1;
 import lejos.hardware.BrickFinder;
 import lejos.hardware.lcd.*;
 import lejos.utility.Delay;
@@ -188,6 +188,13 @@ public class Kine implements Runnable {
 	// scan uitvoeren en opslossing teruggeven
 	int[] scanningField(OpdrachtScan scan) {
 		Board ScanBoard = scan.getScanBoard();
+		//move color sensor above the block, without changing the coordinate of the current position
+		//the coordinate (.,.) is now shifted
+		int DistanceShiftScan=40; //mm
+		double angleRotScan = (DistanceShiftScan/radW)*180/(Math.PI);
+		motorWidth.rotate((int)angleRotScan);
+		motorWidth.close();
+		
 		int [] Move_Scanned = {0,0};
 		for(int i=0;i<3;i++) {
 			for(int j=0;j<3;j++) {
@@ -222,6 +229,10 @@ public class Kine implements Runnable {
 				}
 			}
 		}
+		// go back to the original coordinatesystem
+		motorWidth.rotate(-(int)angleRotScan);
+		motorWidth.close();
+		
 		return null;
 	
 	}
@@ -237,16 +248,19 @@ public class Kine implements Runnable {
 		current=zet.getEnd();		
 	}
     
-    
-
+	RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
+	RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
+	int radW = 19;  //in mm
+	int radL = 15;   //in mm
+	
     void moveXY(int [] first, int []second ){
 		
 		// control width
 		int width = 60; //in mm
-		int radW = 19;  //in mm
+		//int radW = 19;  //in mm
 		int angleW = width/radW;
 		
-		RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
+		//RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 		motorWidth.setSpeed(motorSpeed);
 		double angleRotW = (first[1]-second[1])*angleW*180/(Math.PI);   //in degrees
 		motorWidth.rotate((int)angleRotW);
@@ -255,36 +269,39 @@ public class Kine implements Runnable {
 		
 		// control length
 		int length = 45; //in mm
-		int radL = 15;   //in mm
+		//int radL = 15;   //in mm
 		int angleL = length/radL;
 		
-		RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
+		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeed);
 		double angleRotL = (first[0]-second[0])*angleL*180/(Math.PI);    //in degrees
 		motorLength.rotate(-(int)angleRotL);
 		
 		motorLength.close();
 	}
-
+    RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
+    int distanceZ = 35; //mm
+	int radiusZ = 8; //mm
+	int distanceL = 50; //mm
 	// pick a block:
 	void pick(){
 		
 		//movement down
-		int distanceZ = 35; //mm
-		int radiusZ = 8; //mm
+		//int distanceZ = 35; //mm
+		//int radiusZ = 8; //mm
 		double angleRotZ = (distanceZ/radiusZ)*180/(Math.PI);
-		RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
+		//RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
 		motorZ.rotate((int)angleRotZ);
 		
 		//movement forward
-		int distanceL = 50; //mm
-		int radL = 15; //mm
+		//int distanceL = 50; //mm
+		//int radL = 15; //mm
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
-		RegulatedMotor motorForward = new EV3LargeRegulatedMotor(MotorPort.D);
-		motorForward.setSpeed(motorSpeed);
-		motorForward.rotate((int)angleRotForward);
+		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
+		motorLength.setSpeed(motorSpeed);
+		motorLength.rotate((int)angleRotForward);
 		
-		motorForward.close();
+		motorLength.close();
 		
 		//movement up
 		motorZ.rotate(-(int)angleRotZ);
@@ -297,21 +314,21 @@ public class Kine implements Runnable {
 	void place(){
 		
 		//movement down
-		int distanceZ = 35; //mm
-		int radiusZ = 8; //mm
+		//int distanceZ = 35; //mm
+		//int radiusZ = 8; //mm
 		double angleRotZ = (distanceZ/radiusZ)*180/(Math.PI);
-		RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
+		//RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
 		motorZ.rotate((int)angleRotZ);
 		
 		//movement backward
-		int distanceL = 50; //mm
-		int radL = 15; //mm
+		//int distanceL = 50; //mm
+		//int radL = 15; //mm
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
-		RegulatedMotor motorForward = new EV3LargeRegulatedMotor(MotorPort.D);
-		motorForward.setSpeed(motorSpeed);
-		motorForward.rotate(-(int)angleRotForward);
+		//RegulatedMotor motorForward = new EV3LargeRegulatedMotor(MotorPort.D);
+		motorLength.setSpeed(motorSpeed);
+		motorLength.rotate(-(int)angleRotForward);
 		
-		motorForward.close();
+		motorLength.close();
 		
 		//movement up
 		motorZ.rotate(-(int)angleRotZ);
