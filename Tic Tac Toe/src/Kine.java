@@ -1,4 +1,5 @@
-package test1;
+
+//package test1;
 import lejos.hardware.BrickFinder;
 import lejos.hardware.lcd.*;
 import lejos.utility.Delay;
@@ -194,41 +195,42 @@ public class Kine implements Runnable {
 		double angleRotScan = (DistanceShiftScan/radW)*180/(Math.PI);
 		motorWidth.rotate((int)angleRotScan);
 		motorWidth.close();
-		
+	
+    int [][] BestMoves = scan.getBestMoves();
 		int [] Move_Scanned = {0,0};
-		for(int i=0;i<3;i++) {
-			for(int j=0;j<3;j++) {
-				int [] fieldPosition= {i,j};
-				switch(ScanBoard.cells[i][j].content){
-				case CROSS: {					
-					break; //cell had already a cross, so no block can be placed here
+		for(int k=0; k < BestMoves.length;k++) {
+			int i = BestMoves[k][1];
+			int j = BestMoves[k][2];
+			int [] fieldPosition= {i,j};
+			switch(ScanBoard.cells[i][j].content){
+			case CROSS: {					
+				break; //cell had already a cross, so no block can be placed here
+			}
+			case NOUGHT:{
+				break;
+			}
+			case EMPTY:{
+				moveXY(current,fieldPosition);
+				current=fieldPosition;
+				//Delay.msDelay(20);
+				int measured_color = measurecolor();
+				System.out.print(Integer.toString(measured_color)+ "...");
+				//Delay.msDelay(20);
+				if(measured_color==0){
+					//ScanBoard.cells[i][j].content=Seed.CROSS; //cross is red
+					Move_Scanned = new int[] {i,j};
+					return Move_Scanned;
 				}
-				case NOUGHT:{
-					break;
+				else if(measured_color==3){
+					//ScanBoard.cells[i][j].content=Seed.NOUGHT;//Nought is yellow
+					Move_Scanned = new int[] {i,j};
+					return Move_Scanned;
 				}
-				case EMPTY:{
-					moveXY(current,fieldPosition);
-					current=fieldPosition;
-					//Delay.msDelay(20);
-					int measured_color = measurecolor();
-					System.out.print(Integer.toString(measured_color)+ "...");
-					//Delay.msDelay(20);
-					if(measured_color==0){
-						//ScanBoard.cells[i][j].content=Seed.CROSS; //cross is red
-						Move_Scanned = new int[] {i,j};
-						return Move_Scanned;
-					}
-					else if(measured_color==3){
-						//ScanBoard.cells[i][j].content=Seed.NOUGHT;//Nought is yellow
-						Move_Scanned = new int[] {i,j};
-						return Move_Scanned;
-					}
-					break; //This remains empty so nothing is placed
-					
-				}
-				}
+				break; //This remains empty so nothing is placed	
+			}
 			}
 		}
+    
 		// go back to the original coordinatesystem
 		motorWidth.rotate(-(int)angleRotScan);
 		motorWidth.close();
@@ -357,12 +359,5 @@ public class Kine implements Runnable {
 		 return colorId;
 		 //Delay.msDelay(9000);
 	}
-
-	 
-
-    
-	
-    
- 
 
 }
