@@ -1,7 +1,7 @@
 import java.util.*;
 /** AIPlayer using Minimax algorithm */
 public class AIPlayerMinimax extends AIPlayer {
- 
+	List<int[]> results = new ArrayList<int[]>();
    /** Constructor with the given game board */
    public AIPlayerMinimax(Board board) {
       super(board);
@@ -13,7 +13,34 @@ public class AIPlayerMinimax extends AIPlayer {
       int[] result = minimax(2, mySeed); // depth, max turn
       return new int[] {result[1], result[2]};   // row, col
    }
- 
+   
+   int[][] bestMoves(){
+	   results.clear();
+	   minimax(2, mySeed); // depth, max turn
+	   
+	   int[][] bestMoves = new int[results.size()][3];
+	   for (int i = 0; i < results.size(); i++) {
+		   bestMoves[i] = results.get(i);
+	   }
+	   bestMoves = mysort(bestMoves);
+	   return bestMoves;
+   }
+   
+
+   
+   int[][] mysort(int[][] bestMoves){
+	   //sort array bestMoves by first column (score) in descending order
+       Arrays.sort(bestMoves, new Comparator<int[]>() {
+           @Override
+           public int compare(int[] int1, int[] int2) {
+               Integer numOfKeys1 = int1[0];
+               Integer numOfKeys2 = int2[0];
+               return numOfKeys2.compareTo(numOfKeys1);
+           }
+       });
+       return bestMoves;
+   }
+   
    /** Recursive minimax at level of depth for either maximizing or minimizing player.
        Return int[3] of {score, row, col}  */
    private int[] minimax(int depth, Seed player) {
@@ -50,6 +77,9 @@ public class AIPlayerMinimax extends AIPlayer {
             }
             // Undo move
             cells[move[0]][move[1]].content = Seed.EMPTY;
+            if (depth == 2) {
+            	results.add(new int[] {currentScore, move[0], move[1]});
+            }
          }
       }
       return new int[] {bestScore, bestRow, bestCol};

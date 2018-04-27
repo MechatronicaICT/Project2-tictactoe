@@ -13,6 +13,7 @@ public class GameMain {
 	private Seed currentPlayer; // the current player (of enum Seed)
 	private AIPlayerMinimax aiPlayer1; 
 	private AIPlayerTableLookup aiPlayer2;
+	private AIPlayerMinimax human;
 	private GUI guiLejos;
 	private Kine kine;
 
@@ -56,19 +57,22 @@ public class GameMain {
 		//opstarten kine thread
 		kine = new Kine(arrOpdrachten);
 		Thread tKine = new Thread(kine);
-		tKine.start();
+		//tKine.start();
 
 		board = new Board(3, 3); // allocate game-board
 
 		//opstarten Gui thread
 		guiLejos = new GUI(board);
 		Thread tguiLejos = new Thread(guiLejos);
-		tguiLejos.start();
+		//tguiLejos.start();
 
 		aiPlayer1 = new AIPlayerMinimax(board); //Difficult AI
 		aiPlayer1.setSeed(Seed.NOUGHT);
 		aiPlayer2 = new AIPlayerTableLookup(board); //Easy AI
 		aiPlayer2.setSeed(Seed.NOUGHT);
+		
+		human = new AIPlayerMinimax(board); //To calculate most probable move from human
+		human.setSeed(Seed.CROSS);
 
 		try {
 			while (true) {
@@ -154,7 +158,8 @@ public class GameMain {
 				}
 			} else if (gameMode == 1) {
 				if (!guiLejos.moveNeeded) {
-					OpdrachtScan oScan = new OpdrachtScan(board);
+					int[][] bestmoves = human.bestMoves(); //calculate most probable moves from human
+					OpdrachtScan oScan = new OpdrachtScan(board, bestmoves);
 					arrOpdrachten.add(oScan);
 					while(true) {
 						if (kine.scanDone) {
