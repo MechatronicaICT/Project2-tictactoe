@@ -23,95 +23,95 @@ import lejos.robotics.SampleProvider;
 
 public class Kine implements Runnable {
 	private ArrayDeque<Opdracht> Deque = new ArrayDeque<>();
-	
-	
+
+
 	int [] current= {0,0}; //where we currently are
-    
+
 	public boolean exit_program = false;
-	
+
 	public boolean scanDone = false;
 	public int[] Zet = { 0 , 0};
 
-    //colorsensor
+	//colorsensor
 
 	private int motorSpeed = 400;
 
-	
-    public Kine(ArrayDeque<Opdracht> deque) {
-    	//communicatie array met Game main opzetten
-    	Deque = deque;
-    	
-    }
 
-    public void run() {
-        while(!Thread.interrupted()) {
-    		try {	
-    			//check if there is something in the array
-    			if(!Deque.isEmpty()) {
-    				
-    				Opdracht opd = Deque.peekFirst();
-    				System.out.println(opd.getClass().getName());
-    			  				
-    				executeOpdracht(opd);
-    				
-    			}    			
-    			
-    			if (exit_program) break; //exit program
-    			//to slow down thread when doing nothing
-    			Thread.sleep(200);
-    		} catch (InterruptedException e) {
-    			// TODO Auto-generated catch block
-    			e.printStackTrace();
-    		}   
-        }
-    }
-    
+	public Kine(ArrayDeque<Opdracht> deque) {
+		//communicatie array met Game main opzetten
+		Deque = deque;
+
+	}
+
+	public void run() {
+		while(!Thread.interrupted()) {
+			try {	
+				//check if there is something in the array
+				if(!Deque.isEmpty()) {
+
+					Opdracht opd = Deque.peekFirst();
+					System.out.println(opd.getClass().getName());
+
+					executeOpdracht(opd);
+
+				}    			
+
+				if (exit_program) break; //exit program
+				//to slow down thread when doing nothing
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}   
+		}
+	}
+
 	public void executeOpdracht(Opdracht opd) {
 
 		switch (opd.getClass().getName()) {
-		
+
 		case "OpdrachtZet":
 			OpdrachtZet opdZet = (OpdrachtZet) Deque.removeFirst();  
-			
+
 			executeZet(opdZet);
-			
+
 			return;
-			
+
 		case "OpdrachtAfruimen":
 			OpdrachtAfruimen opdAfruimen = (OpdrachtAfruimen) Deque.removeFirst();  
-			
+
 			cleaningField(opdAfruimen);
-			
+
 			return;
-			
+
 		case "OpdrachtScan":
 			OpdrachtScan opdScan = (OpdrachtScan) Deque.removeFirst();  
-			
+
 			Zet = scanningField(opdScan);
-			
+
 			scanDone = true;
 			return;
-			
+
 		case "OpdrachtHoming":
 			OpdrachtHoming opdHoming = (OpdrachtHoming) Deque.removeFirst();  
-			
+
 			Homing(opdHoming.getHomeposition());
-			
+
 			return;
-			
-			
-			
+
+
+
 		default:
 			//code bij opdtreden fouten
 			return;
 		}
 	}
-			
-    
 
-    
-    
-    /**clean playing field, logic zou aantal zetten van zowel X als O moeten bijhouden (zie X- en Ocount),
+
+
+
+
+	/**clean playing field, logic zou aantal zetten van zowel X als O moeten bijhouden (zie X- en Ocount),
 	 * op die manier kunnen we makkelijk weten op welke positie we de stock moeten aanvullen*/
 
 	void cleaningField(OpdrachtAfruimen afruim) {
@@ -159,7 +159,7 @@ public class Kine implements Runnable {
 	// home positie resetten
 	void Homing(int[] Homeposition) {
 		//data van opdracht stockeren
-		
+
 		moveXY(current,Homeposition);
 		current=Homeposition;
 		if(measurecolor()==7){
@@ -169,23 +169,23 @@ public class Kine implements Runnable {
 			for(int i=-1;i<1;i++) {
 				for(int j=-1;j<1;j++) {
 					int [] fieldPosition= {Homeposition[0]+i,Homeposition[1]+j};
-						moveXY(current, fieldPosition);
-						if(measurecolor()==7){
-							current=Homeposition; 
-							break;
-					/**actually we are current at the fieldPosition which can have the coordinates {7,3}
-					 * but when we are homing we give it the coordinates of the homeposition
-					 * so we can start again at a proper place in our playing grid
-					 */
-						}
-						else{
-							current=fieldPosition;
-						}
+					moveXY(current, fieldPosition);
+					if(measurecolor()==7){
+						current=Homeposition; 
+						break;
+						/**actually we are current at the fieldPosition which can have the coordinates {7,3}
+						 * but when we are homing we give it the coordinates of the homeposition
+						 * so we can start again at a proper place in our playing grid
+						 */
+					}
+					else{
+						current=fieldPosition;
+					}
 				}
 			}
 		}
 	}
-	
+
 	// scan uitvoeren en opslossing teruggeven
 	int[] scanningField(OpdrachtScan scan) {
 		Board ScanBoard = scan.getScanBoard();
@@ -195,9 +195,8 @@ public class Kine implements Runnable {
 		double angleRotScan = (DistanceShiftScan/radW)*180/(Math.PI);
 		motorWidth.rotate((int)angleRotScan);
 		motorWidth.close();
-	
-    int [][] BestMoves = scan.getBestMoves();
-		int [] Move_Scanned = {0,0};
+
+		int [][] BestMoves = scan.getBestMoves();
 		for(int k=0; k < BestMoves.length;k++) {
 			int i = BestMoves[k][1];
 			int j = BestMoves[k][2];
@@ -218,27 +217,29 @@ public class Kine implements Runnable {
 				//Delay.msDelay(20);
 				if(measured_color==0){
 					//ScanBoard.cells[i][j].content=Seed.CROSS; //cross is red
-					Move_Scanned = new int[] {i,j};
-					return Move_Scanned;
+					motorWidth.rotate(-(int)angleRotScan);
+					motorWidth.close();
+					return fieldPosition;
 				}
 				else if(measured_color==3){
 					//ScanBoard.cells[i][j].content=Seed.NOUGHT;//Nought is yellow
-					Move_Scanned = new int[] {i,j};
-					return Move_Scanned;
+					motorWidth.rotate(-(int)angleRotScan);
+					motorWidth.close();
+					return fieldPosition;
 				}
 				break; //This remains empty so nothing is placed	
 			}
 			}
 		}
-    
+
 		// go back to the original coordinatesystem
 		motorWidth.rotate(-(int)angleRotScan);
 		motorWidth.close();
-		
+
 		return null;
-	
+
 	}
-	
+
 	void executeZet(OpdrachtZet zet){
 		//System.out.println(Integer.toString(zet.getStart()[0]));
 		//System.out.println(Integer.toString(zet.getStart()[1]));
@@ -249,52 +250,52 @@ public class Kine implements Runnable {
 		place();
 		current=zet.getEnd();		
 	}
-    
+
 	RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 	RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 	int radW = 19;  //in mm
 	int radL = 15;   //in mm
-	
-    void moveXY(int [] first, int []second ){
-		
+
+	void moveXY(int [] first, int []second ){
+
 		// control width
 		int width = 60; //in mm
 		//int radW = 19;  //in mm
 		int angleW = width/radW;
-		
+
 		//RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 		motorWidth.setSpeed(motorSpeed);
 		double angleRotW = (first[1]-second[1])*angleW*180/(Math.PI);   //in degrees
 		motorWidth.rotate((int)angleRotW);
-		
+
 		motorWidth.close();
-		
+
 		// control length
 		int length = 45; //in mm
 		//int radL = 15;   //in mm
 		int angleL = length/radL;
-		
+
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeed);
 		double angleRotL = (first[0]-second[0])*angleL*180/(Math.PI);    //in degrees
 		motorLength.rotate(-(int)angleRotL);
-		
+
 		motorLength.close();
 	}
-    RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
-    int distanceZ = 35; //mm
+	RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
+	int distanceZ = 35; //mm
 	int radiusZ = 8; //mm
 	int distanceL = 50; //mm
 	// pick a block:
 	void pick(){
-		
+
 		//movement down
 		//int distanceZ = 35; //mm
 		//int radiusZ = 8; //mm
 		double angleRotZ = (distanceZ/radiusZ)*180/(Math.PI);
 		//RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
 		motorZ.rotate((int)angleRotZ);
-		
+
 		//movement forward
 		//int distanceL = 50; //mm
 		//int radL = 15; //mm
@@ -302,26 +303,26 @@ public class Kine implements Runnable {
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeed);
 		motorLength.rotate((int)angleRotForward);
-		
+
 		motorLength.close();
-		
+
 		//movement up
 		motorZ.rotate(-(int)angleRotZ);
-		
+
 		motorZ.close();
-		
+
 	}
-	
+
 	//place a block:
 	void place(){
-		
+
 		//movement down
 		//int distanceZ = 35; //mm
 		//int radiusZ = 8; //mm
 		double angleRotZ = (distanceZ/radiusZ)*180/(Math.PI);
 		//RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
 		motorZ.rotate((int)angleRotZ);
-		
+
 		//movement backward
 		//int distanceL = 50; //mm
 		//int radL = 15; //mm
@@ -329,17 +330,17 @@ public class Kine implements Runnable {
 		//RegulatedMotor motorForward = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeed);
 		motorLength.rotate(-(int)angleRotForward);
-		
+
 		motorLength.close();
-		
+
 		//movement up
 		motorZ.rotate(-(int)angleRotZ);
-		
+
 		motorZ.close();
-		
+
 	}
 
-	 
+
 	int measurecolor(){
 		EV3ColorSensor colorsensor = new EV3ColorSensor(SensorPort.S1);
 		SampleProvider color = colorsensor.getColorIDMode();
@@ -347,17 +348,17 @@ public class Kine implements Runnable {
 		float[] sample = new float[color.sampleSize()];
 		//while(true){
 		//EV3 ev3 =(EV3) BrickFinder.getLocal();
-		 //TextLCD lcd = ev3.getTextLCD();
-		 //color ID. 0 = red; 1 = green; 2 = blue; 3 = yellow; 4 = magenta; 5 = orange; 6 = white; 7 = black; 8 = pink; 9 = gray; 10 = light gray	 
-		 //public static final float limitColor=2;
-		 color.fetchSample(sample, 0);
-		 int colorId=(int)sample[0];
-		 //https://www.programcreek.com/java-api-examples/?api=lejos.hardware.sensor.EV3ColorSensor
-		 //lcd.drawInt(colorId,0,0);
-		 //System.out.println(colorId);
-		 colorsensor.close();
-		 return colorId;
-		 //Delay.msDelay(9000);
+		//TextLCD lcd = ev3.getTextLCD();
+		//color ID. 0 = red; 1 = green; 2 = blue; 3 = yellow; 4 = magenta; 5 = orange; 6 = white; 7 = black; 8 = pink; 9 = gray; 10 = light gray	 
+		//public static final float limitColor=2;
+		color.fetchSample(sample, 0);
+		int colorId=(int)sample[0];
+		//https://www.programcreek.com/java-api-examples/?api=lejos.hardware.sensor.EV3ColorSensor
+		//lcd.drawInt(colorId,0,0);
+		//System.out.println(colorId);
+		colorsensor.close();
+		return colorId;
+		//Delay.msDelay(9000);
 	}
 
 }
