@@ -25,27 +25,29 @@ public class Kine implements Runnable {
 	private ArrayDeque<Opdracht> Deque = new ArrayDeque<>();
 
 	private int [] current= {0,0}; //where we currently are
-	private int [] Homeposition= {7,3}; //position where the homing takes place
+	private int [] Homeposition= {0,0}; //position where the homing takes place
 	private RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 	private RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 	private RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
-	private int motorSpeed = 400;
+	private int motorSpeed = 100;
 	private int width = 60;   //moveXY: distance between two width coordinates
 	private int radW = 19;   //radius conveyor belt
-	private int length = 45;    //moveXY: distance between two length coordinates
+	private int length = 60;    //moveXY: distance between two length coordinates
 	private int radL = 15;   //radius wheels
-	private int distanceZ = 35;   //pick and place: distance arm lowers/rises
+	private int distanceZ = 31;   //pick and place: distance arm lowers/rises
 	private int radiusZ = 8; //radius pinion
-	private int distanceL = 50;   //pick and place: robot drives forward/backwards to pick/place
-	private int pixelX=180;   //homing: #samples in one dimension for homing
-	private int pixelY=180; 	//homing: idem
-	private int angleX=1;	//homing: angle between two samples for homing
-	private int angleY=1;	//homing: idem
-	private double filterValue=1.5; //homing
+	private int distanceL = 30;   //pick and place: robot drives forward/backwards to pick/place
+	private int pixelX=10;   //homing: #samples in one dimension for homing
+	private int pixelY=10; 	//homing: idem
+	private int angleX=5;	//homing: angle between two samples for homing
+	private int angleY=5;	//homing: idem
+	private double filterValue=1; //homing
 	
 	public boolean exit_program = false;
 	public boolean scanDone = false;
 	public int[] Zet = { 0 , 0};
+	
+
 
 	public Kine(ArrayDeque<Opdracht> deque) {
 		//communicatie array met Game main opzetten
@@ -54,10 +56,14 @@ public class Kine implements Runnable {
 
 	public void run() {
 		while(!Thread.interrupted()) {
+			
 			try {	
 				//check if there is something in the array
 				if(!Deque.isEmpty()) {
 
+					motorWidth.setSpeed(motorSpeed);
+					motorLength.setSpeed(motorSpeed);
+					
 					Opdracht opd = Deque.peekFirst();
 					System.out.println(opd.getClass().getName());
 					executeOpdracht(opd);
@@ -103,7 +109,7 @@ public class Kine implements Runnable {
 		case "OpdrachtHoming":
 			OpdrachtHoming opdHoming = (OpdrachtHoming) Deque.removeFirst();  
 
-			Homing(opdHoming);
+			Homing();
 
 			return;
 
@@ -158,21 +164,22 @@ public class Kine implements Runnable {
 	}
 
 	// home positie resetten
-	public void Homing(OpdrachtHoming opdHoming) {
-		
+	public void Homing() {
+				
 		//go to homeposition
 		moveXY(current,Homeposition);
 		current=Homeposition;
 		
+//		RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
+//		RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
+
 		//shift to sensorposition
 		int DistanceShiftScanW=40;
 		double angleRotScanW= (DistanceShiftScanW/radW)*180/(Math.PI);
-		motorWidth.rotate((int)angleRotScanW);
-		motorWidth.close();
-		int DistanceShiftScanL=10; 
+		motorWidth.rotate(-(int)angleRotScanW);
+		int DistanceShiftScanL=60; 
 		double angleRotScanL = (DistanceShiftScanL/radW)*180/(Math.PI);
 		motorLength.rotate((int)angleRotScanL);
-		motorLength.close();
 		
 		//scan region, calculate difference between pixels, filter, determine center of target
 		double [][] image = makeImage();
@@ -183,21 +190,27 @@ public class Kine implements Runnable {
 		//move to center + shift to pickcoordinates
 		int angleWback=center[1]*angleY-(int)angleRotScanW;
 		motorWidth.rotate(angleWback);
-		motorWidth.close();
-		int angleLback=-(180-center[0])*angleX-(int)angleRotScanL;
+		//motorWidth.close();
+		int angleLback=-(angleX*pixelX-center[0])*angleX-(int)angleRotScanL;
 		motorLength.rotate(angleLback);
 		motorLength.close();
 	}
 
 	// scan uitvoeren en oplossing teruggeven
 	public int[] scanningField(OpdrachtScan scan) {
+//		RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
+//		RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
+		
 		Board ScanBoard = scan.getScanBoard();
 		//move color sensor above the block, without changing the coordinate of the current position
 		//the coordinate (.,.) is now shifted
 		int DistanceShiftScan=40; //mm
+		int DistanceLengthScan = 60;
 		double angleRotScan = (DistanceShiftScan/radW)*180/(Math.PI);
-		motorWidth.rotate((int)angleRotScan);
-		motorWidth.close();
+		motorWidth.rotate(-(int)angleRotScan);
+		double angleLengthScan = (DistanceLengthScan/radL)*180/(Math.PI);
+		motorLength.rotate((int)angleLengthScan);
+
 
 		int [][] BestMoves = scan.getBestMoves();
 		for(int k=0; k < BestMoves.length;k++) {
@@ -220,14 +233,18 @@ public class Kine implements Runnable {
 				//Delay.msDelay(20);
 				if(measured_color==0){
 					//ScanBoard.cells[i][j].content=Seed.CROSS; //cross is red
-					motorWidth.rotate(-(int)angleRotScan);
-					motorWidth.close();
+					motorWidth.rotate((int)angleRotScan);
+					//motorWidth.close();
+					motorLength.rotate(-(int)angleLengthScan);
+					//motorLength.close();
 					return fieldPosition;
 				}
 				else if(measured_color==3){
 					//ScanBoard.cells[i][j].content=Seed.NOUGHT;//Nought is yellow
-					motorWidth.rotate(-(int)angleRotScan);
-					motorWidth.close();
+					motorWidth.rotate((int)angleRotScan);
+					//motorWidth.close();
+					motorLength.rotate(-(int)angleLengthScan);
+					//motorLength.close();
 					return fieldPosition;
 				}
 				break; //This remains empty so nothing is placed	
@@ -236,8 +253,10 @@ public class Kine implements Runnable {
 		}
 
 		// go back to the original coordinatesystem
-		motorWidth.rotate(-(int)angleRotScan);
-		motorWidth.close();
+		motorWidth.rotate((int)angleRotScan);
+		//motorWidth.close();
+		motorLength.rotate(-(int)angleLengthScan);
+		//motorLength.close();
 
 		return null;
 
@@ -255,18 +274,18 @@ public class Kine implements Runnable {
 		
 		
 		int angleW = width/radW;
-		//RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
+//		RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 		motorWidth.setSpeed(motorSpeed);
 		double angleRotW = (first[1]-second[1])*angleW*180/(Math.PI);   //in degrees
 		motorWidth.rotate((int)angleRotW);
-		motorWidth.close();
+//		motorWidth.close();
 		
 		int angleL = length/radL;
-		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
+//		RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeed);
 		double angleRotL = (first[0]-second[0])*angleL*180/(Math.PI);    //in degrees
 		motorLength.rotate(-(int)angleRotL);
-		motorLength.close();
+//		motorLength.close();
 	}
 	
 	
@@ -283,11 +302,12 @@ public class Kine implements Runnable {
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeed);
 		motorLength.rotate((int)angleRotForward);
-		motorLength.close();
+		//motorLength.close();
 
 		//movement up
 		motorZ.rotate(-(int)angleRotZ);
-		motorZ.close();
+		//motorZ.close();
+		
 
 	}
 
@@ -301,14 +321,16 @@ public class Kine implements Runnable {
 
 		//movement backward
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
-		//RegulatedMotor motorForward = new EV3LargeRegulatedMotor(MotorPort.D);
+		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeed);
 		motorLength.rotate(-(int)angleRotForward);
-		motorLength.close();
+		//motorLength.close();
 
 		//movement up
 		motorZ.rotate(-(int)angleRotZ);
-		motorZ.close();
+		//motorZ.close();
+		
+
 	}
 
 	public int measurecolor(){
@@ -323,21 +345,22 @@ public class Kine implements Runnable {
 	}
 	
 	public double [][] makeImage(){
+//		 RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
+//		 RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
+
 		 EV3ColorSensor colorsensor = new EV3ColorSensor(SensorPort.S1);
 		 SampleProvider red = colorsensor.getRedMode();
 		 float[] sample2 = new float[red.sampleSize()];
 		 double [][] image = new double [pixelX][pixelY];
+		 
 		 for(int i=0;i<pixelX;i++) {
 			 for(int j=0;j<pixelY;j++) {
 				 red.fetchSample(sample2,0);
 				 image[i][j]=(double)sample2[0];
 				 motorWidth.rotate(angleY);
-				 motorWidth.close();
 			 }
-			 motorWidth.rotate(-180);
-			 motorWidth.close();
+			 motorWidth.rotate(-pixelX*angleX);
 			 motorLength.rotate(angleX);
-			 motorLength.close();
 		 }
 		 colorsensor.close();
 		 return image;
@@ -351,7 +374,7 @@ public class Kine implements Runnable {
 		 M[pixelX-1][pixelY-1]=Math.abs(im[pixelX-1][pixelY-1]-im[pixelX-2][pixelY-1])+Math.abs(im[pixelX-1][pixelY-1]-im[pixelX-1][pixelY-2]);
 		  for(int j=1;j<pixelY-1;j++) {
 			 M[0][j]=Math.abs(im[0][j]-im[1][j])+Math.abs(im[0][j]-im[0][j-1])+Math.abs(im[0][j]-im[0][j+1]);
-			 M[pixelX][j]=Math.abs(im[pixelX][j]-im[1][j])+Math.abs(im[pixelX][j]-im[0][j-1])+Math.abs(im[pixelX][j]-im[0][j+1]);
+			 M[pixelX-1][j]=Math.abs(im[pixelX-1][j]-im[1][j])+Math.abs(im[pixelX-1][j]-im[0][j-1])+Math.abs(im[pixelX-1][j]-im[0][j+1]);
 		 }
 		  for(int i=1;i<pixelX-1;i++) {
 			 M[i][0]=Math.abs(im[i][0]-im[i][1])+Math.abs(im[i][0]-im[i-1][0])+Math.abs(im[i][0]-im[i+1][0]);
@@ -377,10 +400,10 @@ public class Kine implements Runnable {
 		 double comp=mean*filterValue;
 		 for(int i=0;i<pixelX;i++) {
 			 for(int j=0;j<pixelY;j++) {
-				 if (M[i][i]<comp){
-					 F[i][j]=0;
+				 if (M[i][j]<comp){
+					 F[i][j]=1;
 				 }
-				 else  F[i][j]=1;
+				 else  F[i][j]=0;
 			 }
 		 }
 		 return F;

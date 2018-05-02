@@ -57,14 +57,14 @@ public class GameMain {
 		//opstarten kine thread
 		kine = new Kine(arrOpdrachten);
 		Thread tKine = new Thread(kine);
-		//tKine.start();
+		tKine.start();
 
 		board = new Board(3, 3); // allocate game-board
 
 		//opstarten Gui thread
 		guiLejos = new GUI(board);
 		Thread tguiLejos = new Thread(guiLejos);
-		//tguiLejos.start();
+		tguiLejos.start();
 
 		aiPlayer1 = new AIPlayerMinimax(board); //Difficult AI
 		aiPlayer1.setSeed(Seed.NOUGHT);
@@ -76,6 +76,9 @@ public class GameMain {
 
 		try {
 			while (true) {
+//				OpdrachtHoming oHome = new OpdrachtHoming();
+//				arrOpdrachten.add(oHome);
+//
 				loopCase();
 				if (guiLejos.escape_pressed) {
 					//spel resetten
@@ -114,6 +117,9 @@ public class GameMain {
 			//OpdrachtZet oZet = new OpdrachtZet(currentCol, null, null);
 			//arrOpdrachten.add(oZet);
 			/////////////
+			//OpdrachtHoming oHome = new OpdrachtHoming();
+			//arrOpdrachten.add(oHome);
+
 			
 			if(guiLejos.clear_field) {
 				//return all blocks to starting position
@@ -194,6 +200,8 @@ public class GameMain {
 					int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
 					OpdrachtZet oZet = new OpdrachtZet(start_pos, new int[] {row,col});
 					arrOpdrachten.add(oZet);
+					
+
 				} else if (gameMode == 1) {
 					//scan mode
 					if (currentPlayer == Seed.CROSS) {
