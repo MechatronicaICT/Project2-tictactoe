@@ -24,12 +24,12 @@ import lejos.robotics.SampleProvider;
 public class Kine implements Runnable {
 	private ArrayDeque<Opdracht> Deque = new ArrayDeque<>();
 
-	private int [] current= {0,0}; //where we currently are
-	private int [] Homeposition= {0,0}; //position where the homing takes place
+	private double [] current= {0,0}; //where we currently are
+	private double [] Homeposition= {0,0}; //position where the homing takes place
 	private RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 	private RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 	private RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
-	private int motorSpeed = 100;
+	private int motorSpeed = 800;
 	private int width = 60;   //moveXY: distance between two width coordinates
 	private int radW = 19;   //radius conveyor belt
 	private int length = 60;    //moveXY: distance between two length coordinates
@@ -37,11 +37,16 @@ public class Kine implements Runnable {
 	private int distanceZ = 31;   //pick and place: distance arm lowers/rises
 	private int radiusZ = 8; //radius pinion
 	private int distanceL = 30;   //pick and place: robot drives forward/backwards to pick/place
+	private int distanceShiftZ = 40; //Shift coordinate system to sensor
+	private int distanceShiftL = 60; //Same
 	private int pixelX=10;   //homing: #samples in one dimension for homing
 	private int pixelY=10; 	//homing: idem
 	private int angleX=5;	//homing: angle between two samples for homing
 	private int angleY=5;	//homing: idem
 	private double filterValue=1; //homing
+	private MoveLength moveL; //for threads
+	private MoveWidth moveW; //for threads
+
 	
 	public boolean exit_program = false;
 	public boolean scanDone = false;
@@ -113,8 +118,6 @@ public class Kine implements Runnable {
 
 			return;
 
-
-
 		default:
 			//code bij opdtreden fouten
 			return;
@@ -122,8 +125,8 @@ public class Kine implements Runnable {
 	}
 
 	public void cleaningField(OpdrachtAfruimen afruim) {
-		int[][] stock_cross = {{3,0},{3,1},{3,2},{4,0},{4,1}};
-		int[][] stock_nought = {{4,2},{5,0},{5,1},{5,2},{6,0}};
+		double[][] stock_cross = {{3,0.5},{3.5,0.5},{4,0.5},{4.5,0.5},{5,0.5}};
+		double[][] stock_nought = {{3,1.5},{3.5,1.5},{4,1.5},{4.5,1.5},{5,1.5}};
 		boolean block_placed;
 
 		Board CleanBoard = afruim.getCleanBoard();//cleancells onthouden
@@ -134,7 +137,7 @@ public class Kine implements Runnable {
 				block_placed = false;
 				while(!exit_program && !block_placed) {
 					block_placed = true;
-					int [] fieldPosition= {i,j};
+					double [] fieldPosition= {i,j};
 					switch(CleanBoard.cells[i][j].content){
 					case CROSS: {
 						moveXY(current,fieldPosition);
@@ -173,13 +176,16 @@ public class Kine implements Runnable {
 //		RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 //		RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 
+
 		//shift to sensorposition
-		int DistanceShiftScanW=40;
-		double angleRotScanW= (DistanceShiftScanW/radW)*180/(Math.PI);
-		motorWidth.rotate(-(int)angleRotScanW);
-		int DistanceShiftScanL=60; 
-		double angleRotScanL = (DistanceShiftScanL/radW)*180/(Math.PI);
-		motorLength.rotate((int)angleRotScanL);
+//		int DistanceShiftScanW=40;
+//		double angleRotScanW= (DistanceShiftScanW/radW)*180/(Math.PI);
+//		motorWidth.rotate(-(int)angleRotScanW);
+//		int DistanceShiftScanL=60; 
+//		double angleRotScanL = (DistanceShiftScanL/radW)*180/(Math.PI);
+//		motorLength.rotate((int)angleRotScanL);
+		shiftCoordinate();
+
 		
 		//scan region, calculate difference between pixels, filter, determine center of target
 		double [][] image = makeImage();
@@ -188,35 +194,26 @@ public class Kine implements Runnable {
 		int [] center = home(edges);
 		
 		//move to center + shift to pickcoordinates
-		int angleWback=center[1]*angleY-(int)angleRotScanW;
-		motorWidth.rotate(angleWback);
-		//motorWidth.close();
-		int angleLback=-(angleX*pixelX-center[0])*angleX-(int)angleRotScanL;
-		motorLength.rotate(angleLback);
-		motorLength.close();
+//		int angleWback=center[1]*angleY-(int)angleRotScanW;
+//		motorWidth.rotate(angleWback);
+//		//motorWidth.close();
+//		int angleLback=-(angleX*pixelX-center[0])*angleX-(int)angleRotScanL;
+//		motorLength.rotate(angleLback);
+		//motorLength.close();
+		shiftCoordinateReturn();
 	}
 
 	// scan uitvoeren en oplossing teruggeven
 	public int[] scanningField(OpdrachtScan scan) {
 //		RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 //		RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
-		
+		shiftCoordinate();
 		Board ScanBoard = scan.getScanBoard();
-		//move color sensor above the block, without changing the coordinate of the current position
-		//the coordinate (.,.) is now shifted
-		int DistanceShiftScan=40; //mm
-		int DistanceLengthScan = 60;
-		double angleRotScan = (DistanceShiftScan/radW)*180/(Math.PI);
-		motorWidth.rotate(-(int)angleRotScan);
-		double angleLengthScan = (DistanceLengthScan/radL)*180/(Math.PI);
-		motorLength.rotate((int)angleLengthScan);
-
-
 		int [][] BestMoves = scan.getBestMoves();
 		for(int k=0; k < BestMoves.length;k++) {
 			int i = BestMoves[k][1];
 			int j = BestMoves[k][2];
-			int [] fieldPosition= {i,j};
+			double [] fieldPosition= {i,j};
 			switch(ScanBoard.cells[i][j].content){
 			case CROSS: {					
 				break; //cell had already a cross, so no block can be placed here
@@ -233,19 +230,13 @@ public class Kine implements Runnable {
 				//Delay.msDelay(20);
 				if(measured_color==0){
 					//ScanBoard.cells[i][j].content=Seed.CROSS; //cross is red
-					motorWidth.rotate((int)angleRotScan);
-					//motorWidth.close();
-					motorLength.rotate(-(int)angleLengthScan);
-					//motorLength.close();
-					return fieldPosition;
+					shiftCoordinateReturn();
+					return new int[] {(int)fieldPosition[0], (int)fieldPosition[1]};
 				}
 				else if(measured_color==3){
 					//ScanBoard.cells[i][j].content=Seed.NOUGHT;//Nought is yellow
-					motorWidth.rotate((int)angleRotScan);
-					//motorWidth.close();
-					motorLength.rotate(-(int)angleLengthScan);
-					//motorLength.close();
-					return fieldPosition;
+					shiftCoordinateReturn();
+					return new int[] {(int)fieldPosition[0], (int)fieldPosition[1]};
 				}
 				break; //This remains empty so nothing is placed	
 			}
@@ -253,10 +244,7 @@ public class Kine implements Runnable {
 		}
 
 		// go back to the original coordinatesystem
-		motorWidth.rotate((int)angleRotScan);
-		//motorWidth.close();
-		motorLength.rotate(-(int)angleLengthScan);
-		//motorLength.close();
+		shiftCoordinateReturn();
 
 		return null;
 
@@ -270,22 +258,24 @@ public class Kine implements Runnable {
 		current=zet.getEnd();		
 	}
 	 
-	public void moveXY(int [] first, int []second ){
-		
-		
+	public void moveXY(double [] first, double []second ){
 		int angleW = width/radW;
-//		RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
-		motorWidth.setSpeed(motorSpeed);
 		double angleRotW = (first[1]-second[1])*angleW*180/(Math.PI);   //in degrees
-		motorWidth.rotate((int)angleRotW);
-//		motorWidth.close();
-		
+
 		int angleL = length/radL;
-//		RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
-		motorLength.setSpeed(motorSpeed);
 		double angleRotL = (first[0]-second[0])*angleL*180/(Math.PI);    //in degrees
-		motorLength.rotate(-(int)angleRotL);
-//		motorLength.close();
+
+		moveW = new MoveWidth(angleRotW, motorWidth);
+		Thread tMoveW = new Thread(moveW);
+		tMoveW.start();
+
+		moveL = new MoveLength(angleRotL, motorLength);
+		Thread tMoveL = new Thread(moveL);
+		tMoveL.start();
+		
+		while(tMoveW.isAlive() || tMoveL.isAlive()) {
+			//Wait for threads to finish
+		}
 	}
 	
 	
@@ -425,6 +415,20 @@ public class Kine implements Runnable {
 		 int [] home= {X,Y};
 		 return home;
 	 }
-
-
+	 public void shiftCoordinate() {
+			//move color sensor above the block, without changing the coordinate of the current position
+			//the coordinate (.,.) is now shifted
+			double angleRotScan = (distanceShiftZ/radW)*180/(Math.PI);
+			motorWidth.rotate(-(int)angleRotScan);
+			double angleLengthScan = (distanceShiftL/radL)*180/(Math.PI);
+			motorLength.rotate((int)angleLengthScan);
+	 }
+	 public void shiftCoordinateReturn() {
+			//move color sensor above the block, without changing the coordinate of the current position
+			//the coordinate (.,.) is now shifted
+			double angleRotScan = (distanceShiftZ/radW)*180/(Math.PI);
+			motorWidth.rotate((int)angleRotScan);
+			double angleLengthScan = (distanceShiftL/radL)*180/(Math.PI);
+			motorLength.rotate(-(int)angleLengthScan);
+	 }
 }

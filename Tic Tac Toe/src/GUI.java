@@ -164,19 +164,26 @@ public class GUI implements Runnable {
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		g.clear();
 		g.setFont(Font.getDefaultFont());
-		g.drawString("Waiting for human move",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		g.drawString("Waiting for",  g.getWidth()/2, g.getHeight()/4, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		g.drawString("human move",  g.getWidth()/2, g.getHeight()/2, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		
+		g.setFont(Font.getSmallFont());
+		g.drawString("Press OK to confirm",  g.getWidth()/2, 3*g.getHeight()/4, GraphicsLCD.HCENTER|GraphicsLCD.BOTTOM);
+		g.setFont(Font.getDefaultFont());
 
+		
 		int but = Button.waitForAnyPress();
         if ((but & Button.ID_ENTER) != 0) {
         	//block is placed
         	moveNeeded = false;
         	state_GUI = 2;
+        	drawBoard = true;
         }
         else if ((but & Button.ID_ESCAPE) != 0) {
         	escape_pressed = true;
         	state_GUI = 1;
         }
-
+        g.clear();
 	}
 	
 	void humanMove() {

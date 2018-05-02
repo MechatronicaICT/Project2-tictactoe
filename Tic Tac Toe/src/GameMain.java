@@ -34,8 +34,8 @@ public class GameMain {
 	
 	public int[] score = {0,0};
 	
-	public int[][] stock_cross = {{3,0},{3,1},{3,2},{4,0},{4,1}};
-	public int[][] stock_nought = {{4,2},{5,0},{5,1},{5,2},{6,0}};
+	public double[][] stock_cross = {{3,0.5},{3.5,0.5},{4,0.5},{4.5,0.5},{5,0.5}};
+	public double[][] stock_nought = {{3,1.5},{3.5,1.5},{4,1.5},{4.5,1.5},{5,1.5}};
 
 
 	/** The entry main() method */
@@ -197,8 +197,8 @@ public class GameMain {
 				if (gameMode == 0) {
 					//normal mode
 					int[] stock_amount = board.amountOfCrossesandNoughts();
-					int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
-					OpdrachtZet oZet = new OpdrachtZet(start_pos, new int[] {row,col});
+					double[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
+					OpdrachtZet oZet = new OpdrachtZet(start_pos, new double[] {row,col});
 					arrOpdrachten.add(oZet);
 					
 
@@ -209,8 +209,8 @@ public class GameMain {
 					} else if (currentPlayer == Seed.NOUGHT) {
 						//move AI -> place block
 						int[] stock_amount = board.amountOfCrossesandNoughts();
-						int[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
-						OpdrachtZet oZet = new OpdrachtZet(start_pos, new int[] {row,col});
+						double[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
+						OpdrachtZet oZet = new OpdrachtZet(start_pos, new double[] {row,col});
 						arrOpdrachten.add(oZet);
 					}
 				}

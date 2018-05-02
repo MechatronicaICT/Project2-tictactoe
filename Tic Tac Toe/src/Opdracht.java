@@ -2,9 +2,8 @@
 
 public abstract class Opdracht {
 	
-	protected int count;
-	protected int [] start; //where we pick the block
-	protected int [] end; //where we place the block
+	protected double [] start; //where we pick the block
+	protected double [] end; //where we place the block
 
 	//Mogelijkheid 2
 	/**public Opdracht(int c, int[] s, int[] e) {
@@ -15,18 +14,13 @@ public abstract class Opdracht {
 	
 	
 	//overkoepelende zaken
-	int getCount() {
-		return count;
-	}
-	public void Countincr(){                                             
-		count++; // reset        
-	}  
+
 	
-	int[] getStart() {
+	double[] getStart() {
 		return start;
 	}
 	
-	int[] getEnd() {
+	double[] getEnd() {
 		return end;
 	}
 	
