@@ -29,16 +29,17 @@ public class Kine implements Runnable {
 	private RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 	private RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 	private RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
-	private int motorSpeed = 800;
-	private int width = 60;   //moveXY: distance between two width coordinates
-	private int radW = 19;   //radius conveyor belt
-	private int length = 60;    //moveXY: distance between two length coordinates
-	private int radL = 15;   //radius wheels
-	private int distanceZ = 31;   //pick and place: distance arm lowers/rises
-	private int radiusZ = 8; //radius pinion
-	private int distanceL = 30;   //pick and place: robot drives forward/backwards to pick/place
-	private int distanceShiftZ = 40; //Shift coordinate system to sensor
-	private int distanceShiftL = 60; //Same
+	private int motorSpeed = 200;
+	private int motorSpeedZ = 100;
+	private double width = 55.5;   //moveXY: distance between two width coordinates
+	private double radW = 19;   //radius conveyor belt
+	private double length = 60;    //moveXY: distance between two length coordinates
+	private double radL = 15;   //radius wheels
+	private double distanceZ = 47;   //pick and place: distance arm lowers/rises
+	private double radiusZ = 8; //radius pinion
+	private double distanceL = 28.5;   //pick and place: robot drives forward/backwards to pick/place
+	private double distanceShiftZ = 40; //Shift coordinate system to sensor
+	private double distanceShiftL = 60; //Same
 	private int pixelX=10;   //homing: #samples in one dimension for homing
 	private int pixelY=10; 	//homing: idem
 	private int angleX=5;	//homing: angle between two samples for homing
@@ -68,6 +69,7 @@ public class Kine implements Runnable {
 
 					motorWidth.setSpeed(motorSpeed);
 					motorLength.setSpeed(motorSpeed);
+					motorZ.setSpeed(100);
 					
 					Opdracht opd = Deque.peekFirst();
 					System.out.println(opd.getClass().getName());
@@ -259,10 +261,10 @@ public class Kine implements Runnable {
 	}
 	 
 	public void moveXY(double [] first, double []second ){
-		int angleW = width/radW;
+		double angleW = width/radW;
 		double angleRotW = (first[1]-second[1])*angleW*180/(Math.PI);   //in degrees
 
-		int angleL = length/radL;
+		double angleL = length/radL;
 		double angleRotL = (first[0]-second[0])*angleL*180/(Math.PI);    //in degrees
 
 		moveW = new MoveWidth(angleRotW, motorWidth);
@@ -285,17 +287,18 @@ public class Kine implements Runnable {
 		//movement down
 		double angleRotZ = (distanceZ/radiusZ)*180/(Math.PI);
 		//RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
-		motorZ.rotate((int)angleRotZ);
+		motorZ.rotate((int) angleRotZ);
 
 		//movement forward
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
-		motorLength.setSpeed(motorSpeed);
+		motorLength.setSpeed(motorSpeedZ);
 		motorLength.rotate((int)angleRotForward);
 		//motorLength.close();
+		motorLength.setSpeed(motorSpeed);
 
 		//movement up
-		motorZ.rotate(-(int)angleRotZ);
+		motorZ.rotate(-(int) angleRotZ);
 		//motorZ.close();
 		
 
@@ -307,14 +310,15 @@ public class Kine implements Runnable {
 		//movement down
 		double angleRotZ = (distanceZ/radiusZ)*180/(Math.PI);
 		//RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
-		motorZ.rotate((int)angleRotZ);
+		motorZ.rotate((int) angleRotZ);
 
 		//movement backward
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
-		motorLength.setSpeed(motorSpeed);
+		motorLength.setSpeed(motorSpeedZ);
 		motorLength.rotate(-(int)angleRotForward);
 		//motorLength.close();
+		motorLength.setSpeed(motorSpeed);
 
 		//movement up
 		motorZ.rotate(-(int)angleRotZ);

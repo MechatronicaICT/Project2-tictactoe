@@ -16,7 +16,7 @@ public class AIPlayerMinimax extends AIPlayer {
    
    int[][] bestMoves(){
 	   results.clear();
-	   minimax(2, mySeed); // depth, max turn
+	   minimax(4, mySeed); // depth, max turn
 	   
 	   int[][] bestMoves = new int[results.size()][3];
 	   for (int i = 0; i < results.size(); i++) {
@@ -77,7 +77,7 @@ public class AIPlayerMinimax extends AIPlayer {
             }
             // Undo move
             cells[move[0]][move[1]].content = Seed.EMPTY;
-            if (depth == 2) {
+            if (depth == 4) {
             	results.add(new int[] {currentScore, move[0], move[1]});
             }
          }
