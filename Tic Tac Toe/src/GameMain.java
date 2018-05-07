@@ -11,40 +11,29 @@ public class GameMain {
 	private Board board; // the game board
 	private GameState currentState; // the current state of the game (of enum GameState)
 	private Seed currentPlayer; // the current player (of enum Seed)
-	private AIPlayerMinimax aiPlayer1; 
-	private AIPlayerTableLookup aiPlayer2;
-	private AIPlayerMinimax human;
+	private AIPlayerMinimax aiPlayer1; //the difficult AI player
+	private AIPlayerTableLookup aiPlayer2; //the easy AI player
+	private AIPlayerMinimax human; //the human implemented as AI
 	private GUI guiLejos;
 	private Kine kine;
-
-	public static ArrayDeque<Opdracht> arrOpdrachten = new ArrayDeque<>();
-
-	// Named-constants for the dimensions
+	public static ArrayDeque<Opdracht> arrOpdrachten = new ArrayDeque<>(); 
 	public static final int ROWS = 3;
 	public static final int COLS = 3;
-
 	int currentRow, currentCol; // the current seed's row and column
 	int state = 1;
-
 	private int[] Move;
-
-	public int amountOfGames;
-	public int gamesLeft;
-	public int gameMode; //0 = robot zet alles, 1 = mens zet blokjes zelf, robot scant achteraf
-	
-	public int[] score = {0,0};
-	
-	public double[][] stock_cross = {{3,0.5},{3.5,0.5},{4,0.5},{4.5,0.5},{5,0.5}};
-	public double[][] stock_nought = {{3,1.5},{3.5,1.5},{4,1.5},{4.5,1.5},{5,1.5}};
+	private int amountOfGames;
+	private int gamesLeft;
+	private int gameMode; //0 = normal mode, 1 = scan mode
+	private int[] score = {0,0};
+	private double[][] stock_cross = {{3,0.5},{3.5,0.5},{4,0.5},{4.5,0.5},{5,0.5}}; //stock positions
+	private double[][] stock_nought = {{3,1.5},{3.5,1.5},{4,1.5},{4.5,1.5},{5,1.5}}; //stock positions
 
 
 	/** The entry main() method */
 	public static void main(String[] args) {
-
 		new GameMain();
-
 	}
-
 
 	/**
 	 * Constructor to setup the game
@@ -54,14 +43,14 @@ public class GameMain {
 
 	public GameMain(){
 
-		//opstarten kine thread
+		//Start up kine thread
 		kine = new Kine(arrOpdrachten);
 		Thread tKine = new Thread(kine);
 		tKine.start();
 
 		board = new Board(3, 3); // allocate game-board
 
-		//opstarten Gui thread
+		//Start up Gui thread
 		guiLejos = new GUI(board);
 		Thread tguiLejos = new Thread(guiLejos);
 		tguiLejos.start();
@@ -70,40 +59,35 @@ public class GameMain {
 		aiPlayer1.setSeed(Seed.NOUGHT);
 		aiPlayer2 = new AIPlayerTableLookup(board); //Easy AI
 		aiPlayer2.setSeed(Seed.NOUGHT);
-		
+
 		human = new AIPlayerMinimax(board); //To calculate most probable move from human
 		human.setSeed(Seed.CROSS);
 
 		try {
 			while (true) {
-//				OpdrachtHoming oHome = new OpdrachtHoming();
-//				arrOpdrachten.add(oHome);
-//
 				loopCase();
 				if (guiLejos.escape_pressed) {
-					//spel resetten
+					//reset game, go back to state 1
 					state = 1;
 					guiLejos.escape_pressed = false;
 				} else if (guiLejos.exit_program) {
 					kine.exit_program = true;
 					break;
 				}
-				//main opdrachten trager laten draaien
 				Thread.sleep(50);
-			}  // repeat until game-over
+			}  // repeat until exit_program
 
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} // Let the constructor do the job1
-
+		} 
 	}
 
 	public void loopCase() {
 		// init state
 		/*
 		 * 1 = start state
-		 * 2 = bevindt zich in game modus
+		 * 2 = game mode
 		 * 3 = read move from human
 		 * 4 = update board with new move
 		 * 5 = end, someone has won
@@ -113,21 +97,14 @@ public class GameMain {
 		switch (state) {
 
 		case 1: //start
-			//test array via runnable
-			//OpdrachtZet oZet = new OpdrachtZet(currentCol, null, null);
-			//arrOpdrachten.add(oZet);
-			/////////////
-			//OpdrachtHoming oHome = new OpdrachtHoming();
-			//arrOpdrachten.add(oHome);
 
-			
 			if(guiLejos.clear_field) {
 				//return all blocks to starting position
 				guiLejos.clear_field = false;
 				OpdrachtAfruimen oClear = new OpdrachtAfruimen(board);
 				arrOpdrachten.add(oClear);
 			}
-			
+
 			if(guiLejos.Game != 0) {
 				guiLejos.Game = 0;
 				// Initialize the game-board and current status
@@ -146,23 +123,25 @@ public class GameMain {
 		case 2:  //Game
 
 			if (currentPlayer == Seed.CROSS) {
-				//Human aan zet
+				//Human has to perform a move
 				guiLejos.moveNeeded = true;
 				state = 3;
 			} else {
-				// AI aan zet
-				Move = aiPlayer2.move();
+				// AI has to perform a move
+				Move = aiPlayer2.move(); //calculate the best move for the AI
 				state = 4;
 			}
 			return;
 
 		case 3: //Read move from human
 			if (gameMode == 0) {
+				//Normal mode
 				if (!guiLejos.moveNeeded) {
 					Move = guiLejos.Zet;
 					state = 4;
 				}
 			} else if (gameMode == 1) {
+				//Scan mode
 				if (!guiLejos.moveNeeded) {
 					int[][] bestmoves = human.bestMoves(); //calculate most probable moves from human
 					OpdrachtScan oScan = new OpdrachtScan(board, bestmoves);
@@ -171,7 +150,7 @@ public class GameMain {
 						if (kine.scanDone) {
 							kine.scanDone = false;
 							if (kine.Zet == null) {
-								//invalidScan()
+								//invalidScan
 								guiLejos.invalidMove = true;
 								guiLejos.moveNeeded = true;
 							} else {
@@ -193,14 +172,14 @@ public class GameMain {
 				board.cells[row][col].content = currentPlayer;
 				currentRow = row;
 				currentCol = col;
-				
+
 				if (gameMode == 0) {
 					//normal mode
 					int[] stock_amount = board.amountOfCrossesandNoughts();
 					double[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
 					OpdrachtZet oZet = new OpdrachtZet(start_pos, new double[] {row,col});
 					arrOpdrachten.add(oZet);
-					
+
 
 				} else if (gameMode == 1) {
 					//scan mode
@@ -214,7 +193,7 @@ public class GameMain {
 						arrOpdrachten.add(oZet);
 					}
 				}
-				
+
 				guiLejos.drawBoard = true;
 				if (hasWon(currentPlayer)) { // check for win
 					currentState = (currentPlayer == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
@@ -247,7 +226,7 @@ public class GameMain {
 				guiLejos.game_finished = true;
 				guiLejos.winner = Seed.EMPTY;
 			}
-			
+
 			state = 1;
 			gamesLeft--;
 			if (gamesLeft  == 0) {
@@ -255,9 +234,7 @@ public class GameMain {
 				state = 1;
 			}
 			return;
-			
-		case 6:
-			return;
+
 			//error			
 		default: System.out.println("fault GameMain");
 		return;	
@@ -269,88 +246,7 @@ public class GameMain {
 		board.init(); // clear the board contents
 		currentPlayer = guiLejos.firstPlayer;
 		currentState = GameState.PLAYING; // ready to play
-
 	}
-
-	/**
-	 * The player with "theSeed" makes one move, with input validation. Update
-	 * Cell's content, Board's currentRow and currentCol.
-	 */
-	//	
-	//	public void updateBoard(int row, int col) {
-	//		if (row >= 0 && row < Board.ROWS && col >= 0 && col < Board.COLS
-	//				&& board.cells[row][col].content == Seed.EMPTY) {
-	//			board.cells[row][col].content = currentPlayer;
-	//			currentRow = row;
-	//			currentCol = col;
-	//			guiLejos.drawBoard = 1;
-	//			if (hasWon(currentPlayer)) { // check for win
-	//				currentState = (currentPlayer == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
-	//				state = 4;
-	//			} else if (isDraw()) { // check for draw
-	//				currentState = GameState.DRAW;
-	//				state = 4;
-	//			}
-	//			currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS; //switch current player
-	//		} else {
-	//			//invalidmove in GUI
-	//		}
-	//	}
-	//	public void playerMove(Seed theSeed) {
-	//		boolean validInput = false; // for validating input
-	//
-	//		do {
-	//			int row = 0;
-	//			int col = 0;
-	//			if (theSeed == Seed.CROSS) {
-	//				// System.out.println("Player 'X', enter your move (row[1-3] column[1-3]): ");
-	//				// int[] test = aiPlayer1.move();
-	//
-	//				// row = test[0];
-	//				// col = test[1];
-	//
-	//				// row = in.nextInt() - 1;
-	//				// col = in.nextInt() - 1;
-	//				//  waight for zet speler
-	//				int[] test = guiLejos.humanMove();
-	//				
-	//				// zet verwerken
-	//				row = test[0];
-	//				col = test[1];
-	//			} else {
-	//				// System.out.println("Player 'O', enter your move (row[1-3] column[1-3]): ");
-	//				// AI zet opvragen
-	//				int[] test = aiPlayer2.move();
-	//				// zet verwerken
-	//				row = test[0];
-	//				col = test[1];
-	//
-	//			}
-	//
-	//			if (row >= 0 && row < Board.ROWS && col >= 0 && col < Board.COLS
-	//					&& board.cells[row][col].content == Seed.EMPTY) {
-	//				board.cells[row][col].content = theSeed;
-	//				currentRow = row;
-	//				currentCol = col;
-	//				validInput = true; // input okay, exit loop
-	//			} else {
-	//				guiLejos.invalidMove();
-	//			}
-	//		} while (!validInput); // repeat until input is valid
-	//	}
-	//
-	//	/** Update the currentState after the player with "theSeed" has moved */
-	//	public void updateGame(Seed theSeed) {
-	//		if (hasWon(theSeed)) { // check for win
-	//			currentState = (theSeed == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
-	//			state = 4;
-	//		} else if (isDraw()) { // check for draw
-	//			currentState = GameState.DRAW;
-	//			state = 4;
-	//		}
-	//		// Otherwise, no change to current state (still GameState.PLAYING).
-	//	}
-
 
 
 	public static int ROWS() {
@@ -390,7 +286,7 @@ public class GameMain {
 				&& board.cells[0][2].content == theSeed && board.cells[1][1].content == theSeed
 				&& board.cells[2][0].content == theSeed);
 	}
-	
+
 
 
 }
