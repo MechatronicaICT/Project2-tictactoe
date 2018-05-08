@@ -1,4 +1,4 @@
-
+package test1;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -16,7 +16,7 @@ public class GameMain {
 	private AIPlayerMinimax human; //the human implemented as AI
 	private GUI guiLejos;
 	private Kine kine;
-	public static ArrayDeque<Opdracht> arrOpdrachten = new ArrayDeque<>(); 
+	public static ArrayDeque<Task> arrTasks = new ArrayDeque<>(); 
 	public static final int ROWS = 3;
 	public static final int COLS = 3;
 	int currentRow, currentCol; // the current seed's row and column
@@ -44,7 +44,7 @@ public class GameMain {
 	public GameMain(){
 
 		//Start up kine thread
-		kine = new Kine(arrOpdrachten);
+		kine = new Kine(arrTasks);
 		Thread tKine = new Thread(kine);
 		tKine.start();
 
@@ -91,7 +91,7 @@ public class GameMain {
 		 * 3 = read move from human
 		 * 4 = update board with new move
 		 * 5 = end, someone has won
-		 * 6 = 
+		 * 
 		 * 
 		 */
 		switch (state) {
@@ -101,8 +101,8 @@ public class GameMain {
 			if(guiLejos.clear_field) {
 				//return all blocks to starting position
 				guiLejos.clear_field = false;
-				OpdrachtAfruimen oClear = new OpdrachtAfruimen(board);
-				arrOpdrachten.add(oClear);
+				TaskClearField oClear = new TaskClearField(board);
+				arrTasks.add(oClear);
 			}
 
 			if(guiLejos.Game != 0) {
@@ -144,8 +144,8 @@ public class GameMain {
 				//Scan mode
 				if (!guiLejos.moveNeeded) {
 					int[][] bestmoves = human.bestMoves(); //calculate most probable moves from human
-					OpdrachtScan oScan = new OpdrachtScan(board, bestmoves);
-					arrOpdrachten.add(oScan);
+					TaskScan oScan = new TaskScan(board, bestmoves);
+					arrTasks.add(oScan);
 					while(true) {
 						if (kine.scanDone) {
 							kine.scanDone = false;
@@ -177,8 +177,8 @@ public class GameMain {
 					//normal mode
 					int[] stock_amount = board.amountOfCrossesandNoughts();
 					double[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
-					OpdrachtZet oZet = new OpdrachtZet(start_pos, new double[] {row,col});
-					arrOpdrachten.add(oZet);
+					TaskMove tMove = new TaskMove(start_pos, new double[] {row,col});
+					arrTasks.add(tMove);
 
 
 				} else if (gameMode == 1) {
@@ -189,8 +189,8 @@ public class GameMain {
 						//move AI -> place block
 						int[] stock_amount = board.amountOfCrossesandNoughts();
 						double[] start_pos = (currentPlayer == Seed.CROSS) ? stock_cross[stock_amount[0]-1]: stock_nought[stock_amount[1]-1];
-						OpdrachtZet oZet = new OpdrachtZet(start_pos, new double[] {row,col});
-						arrOpdrachten.add(oZet);
+						TaskMove tMove = new TaskMove(start_pos, new double[] {row,col});
+						arrTasks.add(tMove);
 					}
 				}
 

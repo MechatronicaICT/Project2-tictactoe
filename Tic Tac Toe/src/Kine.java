@@ -1,5 +1,4 @@
-
-//package test1;
+package test1;
 import lejos.hardware.BrickFinder;
 import lejos.hardware.lcd.*;
 import lejos.utility.Delay;
@@ -22,7 +21,7 @@ import lejos.robotics.SampleProvider;
 //import lejos.hardware.lcd.TextLCD;
 
 public class Kine implements Runnable {
-	private ArrayDeque<Opdracht> Deque = new ArrayDeque<>();
+	private ArrayDeque<Task> Deque = new ArrayDeque<>();
 
 	private double [] current= {0,0}; //where we currently are
 	private double [] Homeposition= {0,0}; //position where the homing takes place
@@ -51,12 +50,12 @@ public class Kine implements Runnable {
 	
 	public boolean exit_program = false;
 	public boolean scanDone = false;
-	public int[] Zet = { 0 , 0};
+	public int[] Move = { 0 , 0};
 	
 
 
-	public Kine(ArrayDeque<Opdracht> deque) {
-		//communicatie array met Game main opzetten
+	public Kine(ArrayDeque<Task> deque) {
+		//Communication array with Game main 
 		Deque = deque;
 	}
 
@@ -71,9 +70,9 @@ public class Kine implements Runnable {
 					motorLength.setSpeed(motorSpeed);
 					motorZ.setSpeed(100);
 					
-					Opdracht opd = Deque.peekFirst();
-					System.out.println(opd.getClass().getName());
-					executeOpdracht(opd);
+					Task tsk = Deque.peekFirst();
+					System.out.println(tsk.getClass().getName());
+					executeTask(tsk);
 
 				}    			
 
@@ -87,51 +86,51 @@ public class Kine implements Runnable {
 		}
 	}
 
-	public void executeOpdracht(Opdracht opd) {
+	public void executeTask(Task tsk) {
 
-		switch (opd.getClass().getName()) {
+		switch (tsk.getClass().getName()) {
 
-		case "OpdrachtZet":
-			OpdrachtZet opdZet = (OpdrachtZet) Deque.removeFirst();  
+		case "TaskMove":
+			TaskMove tskMove = (TaskMove) Deque.removeFirst();  
 
-			executeZet(opdZet);
-
-			return;
-
-		case "OpdrachtAfruimen":
-			OpdrachtAfruimen opdAfruimen = (OpdrachtAfruimen) Deque.removeFirst();  
-
-			cleaningField(opdAfruimen);
+			executeMove(tskMove);
 
 			return;
 
-		case "OpdrachtScan":
-			OpdrachtScan opdScan = (OpdrachtScan) Deque.removeFirst();  
+		case "TaskClearField":
+			TaskClearField tskClearField = (TaskClearField) Deque.removeFirst();  
 
-			Zet = scanningField(opdScan);
+			cleaningField(tskClearField);
+
+			return;
+
+		case "TaskScan":
+			TaskScan tskScan = (TaskScan) Deque.removeFirst();  
+
+			Move = scanningField(tskScan);
 
 			scanDone = true;
 			return;
 
-		case "OpdrachtHoming":
-			OpdrachtHoming opdHoming = (OpdrachtHoming) Deque.removeFirst();  
+		case "TaskHoming":
+			TaskHoming tskHoming = (TaskHoming) Deque.removeFirst();  
 
 			Homing();
 
 			return;
 
 		default:
-			//code bij opdtreden fouten
+			//code when an error occurs
 			return;
 		}
 	}
 
-	public void cleaningField(OpdrachtAfruimen afruim) {
+	public void cleaningField(TaskClearField afruim) {
 		double[][] stock_cross = {{3,0.5},{3.5,0.5},{4,0.5},{4.5,0.5},{5,0.5}};
 		double[][] stock_nought = {{3,1.5},{3.5,1.5},{4,1.5},{4.5,1.5},{5,1.5}};
 		boolean block_placed;
 
-		Board CleanBoard = afruim.getCleanBoard();//cleancells onthouden
+		Board CleanBoard = afruim.getCleanBoard();//remember cleancells 
 		int[] Count = CleanBoard.amountOfCrossesandNoughts();
 
 		for(int i=0;i<3;i++) {
@@ -206,7 +205,7 @@ public class Kine implements Runnable {
 	}
 
 	// scan uitvoeren en oplossing teruggeven
-	public int[] scanningField(OpdrachtScan scan) {
+	public int[] scanningField(TaskScan scan) {
 //		RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 //		RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		shiftCoordinate();
@@ -252,12 +251,12 @@ public class Kine implements Runnable {
 
 	}
 
-	public void executeZet(OpdrachtZet zet){
-		moveXY(current, zet.getStart());
+	public void executeMove(TaskMove move){
+		moveXY(current, move.getStart());
 		pick();
-		moveXY(zet.getStart(), zet.getEnd());
+		moveXY(move.getStart(), move.getEnd());
 		place();
-		current=zet.getEnd();		
+		current=move.getEnd();		
 	}
 	 
 	public void moveXY(double [] first, double []second ){

@@ -1,10 +1,9 @@
-
-
+package test1;
 import lejos.hardware.BrickFinder;
 import lejos.hardware.Button;
 import lejos.hardware.lcd.*;
 import lejos.hardware.lcd.GraphicsLCD;
-import lejos.utility.Delay;
+
 
 
 public class GUI implements Runnable {
@@ -18,7 +17,7 @@ public class GUI implements Runnable {
 	public int Game;
 	public int[] Zet = { 0 , 0};
 	public int amountOfGames;
-	public int gameMode; //0 = robot zet alles, 1 = mens zet blokjes zelf, robot scant achteraf
+	public int gameMode; //0 = normal mode: the robot places the cubes of the human player, 1 = scan mode: the human player places the cubes, the robot will scan with the color sensor to determine the position
 	public Seed firstPlayer;
 	public int[] score;
 	private int[] move_human;
@@ -134,7 +133,7 @@ public class GUI implements Runnable {
 		g.drawLine(SW/3, 0, SW/3, SH);
 		g.drawLine(2*SW/3, 0, 2*SW/3, SH);
 
-		int [][] pos_fields = {{SW/6,SW/2,5*SW/6},{7*SH/24,15*SH/24,23*SH/24}}; //Position of X's and O's in the board
+		int [][] pos_fields = {{SW/6,SW/2,5*SW/6},{7*SH/24,15*SH/24,23*SH/24}}; //Position of X's and O's on the board
 		for (int ix=0;ix<3;ix++) {
 			for (int iy=0;iy<3;iy++) {
 				if (cells[iy][ix].content != Seed.EMPTY) {
@@ -165,7 +164,7 @@ public class GUI implements Runnable {
 
 		int but = Button.waitForAnyPress();
 		if ((but & Button.ID_ENTER) != 0) {
-			//block is placed
+			//Cube is placed
 			moveNeeded = false;
 			state_GUI = 2;
 			drawBoard = true;
@@ -178,8 +177,8 @@ public class GUI implements Runnable {
 	}
 
 	void humanMove() {
-		//if back knop ingedrukt -> afsluiten
-		//while loop eruit en humanmove in de case2
+		//if back is pressed, it shuts down
+		
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		g.setStrokeStyle(1);
 		g.drawRect(pos_fields[0][move_human[1]], pos_fields[1][move_human[0]], 30, 30);
@@ -353,7 +352,7 @@ public class GUI implements Runnable {
 	}
 
 	int gameMode() {
-		//choose game mode"
+		//choose game mode
 		GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
 		int gameMode = 0;
 		String explanation = "";
