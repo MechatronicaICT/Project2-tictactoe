@@ -1,4 +1,4 @@
-package test1;
+
 import lejos.hardware.BrickFinder;
 import lejos.hardware.lcd.*;
 import lejos.utility.Delay;
@@ -29,15 +29,16 @@ public class Kine implements Runnable {
 	private RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 	private RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
 	private int motorSpeed = 200;
-	private int motorSpeedZ = 100;
+	private int motorSpeedSlow = 100;
+	private int motorSpeedFast= 200;
 	private double width = 55.5;   //moveXY: distance between two width coordinates
 	private double radW = 19;   //radius conveyor belt
 	private double length = 60;    //moveXY: distance between two length coordinates
 	private double radL = 15;   //radius wheels
 	private double distanceZ = 47;   //pick and place: distance arm lowers/rises
 	private double radiusZ = 8; //radius pinion
-	private double distanceL = 28.5;   //pick and place: robot drives forward/backwards to pick/place
-	private double distanceShiftZ = 40; //Shift coordinate system to sensor
+	private double distanceL = 27;   //pick and place: robot drives forward/backwards to pick/place
+	private double distanceShiftW = 40; //Shift coordinate system to sensor
 	private double distanceShiftL = 60; //Same
 	private int pixelX=10;   //homing: #samples in one dimension for homing
 	private int pixelY=10; 	//homing: idem
@@ -71,7 +72,7 @@ public class Kine implements Runnable {
 					motorZ.setSpeed(100);
 					
 					Task tsk = Deque.peekFirst();
-					System.out.println(tsk.getClass().getName());
+					//System.out.println(tsk.getClass().getName());
 					executeTask(tsk);
 
 				}    			
@@ -165,6 +166,8 @@ public class Kine implements Runnable {
 				}
 			}
 		}
+		moveXY(current, new double[] {0,0});
+		current = new double[] {0,0};
 	}
 
 	// home positie resetten
@@ -227,7 +230,7 @@ public class Kine implements Runnable {
 				current=fieldPosition;
 				//Delay.msDelay(20);
 				int measured_color = measurecolor();
-				System.out.print(Integer.toString(measured_color)+ "...");
+				// 	System.out.print(Integer.toString(measured_color)+ "...");
 				//Delay.msDelay(20);
 				if(measured_color==0){
 					//ScanBoard.cells[i][j].content=Seed.CROSS; //cross is red
@@ -237,7 +240,13 @@ public class Kine implements Runnable {
 				else if(measured_color==3){
 					//ScanBoard.cells[i][j].content=Seed.NOUGHT;//Nought is yellow
 					shiftCoordinateReturn();
-					return new int[] {(int)fieldPosition[0], (int)fieldPosition[1]};
+					double[][] stock_nought = {{3,1.5},{3.5,1.5},{4,1.5},{4.5,1.5},{5,1.5}};
+					int[] Count = ScanBoard.amountOfCrossesandNoughts();
+					pick();
+					moveXY(current,stock_nought[Count[1]]);
+					place();
+					current = stock_nought[Count[1]];
+					shiftCoordinate();
 				}
 				break; //This remains empty so nothing is placed	
 			}
@@ -291,7 +300,7 @@ public class Kine implements Runnable {
 		//movement forward
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
-		motorLength.setSpeed(motorSpeedZ);
+		motorLength.setSpeed(motorSpeedSlow);
 		motorLength.rotate((int)angleRotForward);
 		//motorLength.close();
 		motorLength.setSpeed(motorSpeed);
@@ -314,13 +323,15 @@ public class Kine implements Runnable {
 		//movement backward
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
-		motorLength.setSpeed(motorSpeedZ);
+		motorLength.setSpeed(motorSpeedSlow);
 		motorLength.rotate(-(int)angleRotForward);
 		//motorLength.close();
 		motorLength.setSpeed(motorSpeed);
 
 		//movement up
+		motorZ.setSpeed(motorSpeedFast);
 		motorZ.rotate(-(int)angleRotZ);
+		motorZ.setSpeed(motorSpeedSlow);
 		//motorZ.close();
 		
 
@@ -421,17 +432,37 @@ public class Kine implements Runnable {
 	 public void shiftCoordinate() {
 			//move color sensor above the block, without changing the coordinate of the current position
 			//the coordinate (.,.) is now shifted
-			double angleRotScan = (distanceShiftZ/radW)*180/(Math.PI);
-			motorWidth.rotate(-(int)angleRotScan);
+			double angleRotScan = (distanceShiftW/radW)*180/(Math.PI);
 			double angleLengthScan = (distanceShiftL/radL)*180/(Math.PI);
-			motorLength.rotate((int)angleLengthScan);
+			
+			moveW = new MoveWidth(-angleRotScan, motorWidth);
+			Thread tMoveW = new Thread(moveW);
+			tMoveW.start();
+
+			moveL = new MoveLength(-angleLengthScan, motorLength);
+			Thread tMoveL = new Thread(moveL);
+			tMoveL.start();
+			
+			while(tMoveW.isAlive() || tMoveL.isAlive()) {
+				//Wait for threads to finish
+			}
 	 }
 	 public void shiftCoordinateReturn() {
 			//move color sensor above the block, without changing the coordinate of the current position
 			//the coordinate (.,.) is now shifted
-			double angleRotScan = (distanceShiftZ/radW)*180/(Math.PI);
-			motorWidth.rotate((int)angleRotScan);
+			double angleRotScan = (distanceShiftW/radW)*180/(Math.PI);
 			double angleLengthScan = (distanceShiftL/radL)*180/(Math.PI);
-			motorLength.rotate(-(int)angleLengthScan);
+
+			moveW = new MoveWidth(angleRotScan, motorWidth);
+			Thread tMoveW = new Thread(moveW);
+			tMoveW.start();
+
+			moveL = new MoveLength(angleLengthScan, motorLength);
+			Thread tMoveL = new Thread(moveL);
+			tMoveL.start();
+			
+			while(tMoveW.isAlive() || tMoveL.isAlive()) {
+				//Wait for threads to finish
+			}
 	 }
 }

@@ -1,4 +1,4 @@
-package test1;
+
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -101,8 +101,8 @@ public class GameMain {
 			if(guiLejos.clear_field) {
 				//return all blocks to starting position
 				guiLejos.clear_field = false;
-				TaskClearField oClear = new TaskClearField(board);
-				arrTasks.add(oClear);
+				TaskClearField tClear = new TaskClearField(board);
+				arrTasks.add(tClear);
 			}
 
 			if(guiLejos.Game != 0) {
@@ -128,7 +128,7 @@ public class GameMain {
 				state = 3;
 			} else {
 				// AI has to perform a move
-				Move = aiPlayer2.move(); //calculate the best move for the AI
+				Move = aiPlayer1.move(); //calculate the best move for the AI
 				state = 4;
 			}
 			return;
@@ -137,24 +137,24 @@ public class GameMain {
 			if (gameMode == 0) {
 				//Normal mode
 				if (!guiLejos.moveNeeded) {
-					Move = guiLejos.Zet;
+					Move = guiLejos.Move;
 					state = 4;
 				}
 			} else if (gameMode == 1) {
 				//Scan mode
 				if (!guiLejos.moveNeeded) {
 					int[][] bestmoves = human.bestMoves(); //calculate most probable moves from human
-					TaskScan oScan = new TaskScan(board, bestmoves);
-					arrTasks.add(oScan);
+					TaskScan tScan = new TaskScan(board, bestmoves);
+					arrTasks.add(tScan);
 					while(true) {
 						if (kine.scanDone) {
 							kine.scanDone = false;
-							if (kine.Zet == null) {
+							if (kine.Move == null) {
 								//invalidScan
 								guiLejos.invalidMove = true;
 								guiLejos.moveNeeded = true;
 							} else {
-								Move = kine.Zet;
+								Move = kine.Move;
 								state = 4;
 							}
 							break;

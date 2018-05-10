@@ -1,4 +1,4 @@
-package test1;
+
 public class TaskScan extends Task {
 
 	/**ScanCell contains the positions of the already placed Crosses and Noughts. When ScanCell is empty it 

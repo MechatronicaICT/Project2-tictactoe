@@ -1,4 +1,4 @@
-package test1;
+
 import lejos.hardware.BrickFinder;
 import lejos.hardware.Button;
 import lejos.hardware.lcd.*;
@@ -15,11 +15,11 @@ public class GUI implements Runnable {
 	public int ROWS;
 	public int COLS;
 	public int Game;
-	public int[] Zet = { 0 , 0};
+	public int[] Move = { 0 , 0};
 	public int amountOfGames;
 	public int gameMode; //0 = normal mode: the robot places the cubes of the human player, 1 = scan mode: the human player places the cubes, the robot will scan with the color sensor to determine the position
 	public Seed firstPlayer;
-	public int[] score;
+	public int[] score = {0,0};
 	private int[] move_human;
 	private int[][] pos_fields;
 	public boolean drawBoard = false;
@@ -84,6 +84,9 @@ public class GUI implements Runnable {
 				else {
 					if(moveNeeded) {
 						state_GUI = 3;
+						move_human =  new int[] { 1 , 1 };
+						GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
+						pos_fields = new int [][]{ { g.getWidth()/12, 5*g.getWidth() / 12, 9 * g.getWidth() / 12 }, { g.getHeight() / 12, 5 * g.getHeight() / 12, 9 * g.getHeight() / 12 } };
 					}
 					if (drawBoard) {
 						drawBoard();
@@ -94,9 +97,6 @@ public class GUI implements Runnable {
 			return;
 		case 3: 
 			if (gameMode == 0) {
-				move_human =  new int[] { 1 , 1 };
-				GraphicsLCD g = BrickFinder.getDefault().getGraphicsLCD();
-				pos_fields = new int [][]{ { g.getWidth()/12, 5*g.getWidth() / 12, 9 * g.getWidth() / 12 }, { g.getHeight() / 12, 5 * g.getHeight() / 12, 9 * g.getHeight() / 12 } };
 				humanMove();
 			} else if (gameMode == 1) {
 				scanMove();
@@ -189,7 +189,7 @@ public class GUI implements Runnable {
 		if ((but & Button.ID_ENTER) != 0) {
 			g.setStrokeStyle(0);
 			state_GUI = 2;
-			Zet = move_human;
+			Move = move_human;
 			moveNeeded = false;
 		}
 		else if ((but & Button.ID_LEFT) != 0) {
