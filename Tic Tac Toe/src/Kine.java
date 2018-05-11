@@ -24,21 +24,22 @@ public class Kine implements Runnable {
 	private ArrayDeque<Task> Deque = new ArrayDeque<>();
 
 	private double [] current= {0,0}; //where we currently are
+	private double [] Homeposition= {0,0}; //position where the homing takes place
 	private RegulatedMotor motorWidth = new EV3LargeRegulatedMotor(MotorPort.C);
 	private RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 	private RegulatedMotor motorZ = new EV3LargeRegulatedMotor(MotorPort.B);
-	private int motorSpeed = 200;
+	private int motorSpeed = 150;
 	private int motorSpeedSlow = 100;
-	private int motorSpeedFast= 200;
-	private double width = 55.5;   //moveXY: distance between two width coordinates
+	private int motorSpeedFast= 150;
+	private double width = 55.7;   //moveXY: distance between two width coordinates
 	private double radW = 19;   //radius conveyor belt
-	private double length = 60;    //moveXY: distance between two length coordinates
+	private double length = 65.5;    //moveXY: distance between two length coordinates
 	private double radL = 15;   //radius wheels
-	private double distanceZ = 47;   //pick and place: distance arm lowers/rises
+	private double distanceZ = 48;   //pick and place: distance arm lowers/rises
 	private double radiusZ = 8; //radius pinion
-	private double distanceL = 27;   //pick and place: robot drives forward/backwards to pick/place
+	private double distanceL = 27.5;   //pick and place: robot drives forward/backwards to pick/place
 	private double distanceShiftW = 40; //Shift coordinate system to sensor
-	private double distanceShiftL = 60; //Same
+	private double distanceShiftL = 67; //Same
 	private MoveLength moveL; //for threads
 	private MoveWidth moveW; //for threads
 
@@ -106,7 +107,12 @@ public class Kine implements Runnable {
 
 			scanDone = true;
 			return;
+		case "TaskHoming":
+			TaskHoming tskHoming = (TaskHoming) Deque.removeFirst();  
 
+			Homing(tskHoming);
+
+			return;
 
 		default:
 			//code when an error occurs
@@ -211,6 +217,14 @@ public class Kine implements Runnable {
 		return null;
 
 	}
+	// home positie resetten
+		public void Homing(TaskHoming home) {
+					
+			moveXY(current,Homeposition);
+			current=Homeposition;
+			motorLength.rotate(15);
+		}
+
 
 	public void executeMove(TaskMove move){
 		moveXY(current, move.getStart());
@@ -253,7 +267,7 @@ public class Kine implements Runnable {
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeedSlow);
-		motorLength.rotate((int)angleRotForward);
+		motorLength.rotate((int)angleRotForward+7);
 		//motorLength.close();
 		motorLength.setSpeed(motorSpeed);
 
@@ -276,7 +290,7 @@ public class Kine implements Runnable {
 		double angleRotForward = (distanceL/radL)*180/(Math.PI);
 		//RegulatedMotor motorLength = new EV3LargeRegulatedMotor(MotorPort.D);
 		motorLength.setSpeed(motorSpeedSlow);
-		motorLength.rotate(-(int)angleRotForward);
+		motorLength.rotate(-(int)angleRotForward+2);
 		//motorLength.close();
 		motorLength.setSpeed(motorSpeed);
 
