@@ -8,7 +8,6 @@ import lejos.utility.Delay;
 import java.util.ArrayDeque;
 import java.util.Scanner;
 
-import Opdracht;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.motor.Motor;
 import lejos.hardware.port.MotorPort;

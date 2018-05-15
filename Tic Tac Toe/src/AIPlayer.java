@@ -12,8 +12,8 @@
  */
 
 public abstract class AIPlayer {
-   protected int ROWS = GameMain.ROWS();  // number of rows
-   protected int COLS = GameMain.COLS();  // number of columns
+   protected int ROWS = Logic.ROWS();  // number of rows
+   protected int COLS = Logic.COLS();  // number of columns
  
    protected Cell[][] cells; // the board's ROWS-by-COLS array of Cells
    protected Seed mySeed;    // computer's seed
