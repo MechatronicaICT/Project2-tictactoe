@@ -101,7 +101,8 @@ public class Logic {
 			if(guiLejos.clear_field) {
 				//return all blocks to starting position
 				guiLejos.clear_field = false;
-				TaskClearField tClear = new TaskClearField(board);
+				Board boardcopy = new Board(board);
+				TaskClearField tClear = new TaskClearField(boardcopy);
 				arrTasks.add(tClear);
 			}
 
@@ -236,7 +237,7 @@ public class Logic {
 			return;
 
 			//error			
-		default: System.out.println("fault GameMain");
+		default: System.out.println("fault Logic");
 		return;	
 		}
 	}

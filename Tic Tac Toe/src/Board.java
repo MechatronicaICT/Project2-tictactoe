@@ -21,6 +21,9 @@ public class Board {  // save as Board.java
          }
       }
    }
+   public Board(Board another) {
+	    this.cells = another.cells; // you can access  
+   }
  
    /** Initialize (or re-initialize) the contents of the game board */
    public void init() {
